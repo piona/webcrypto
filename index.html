@@ -1301,7 +1301,7 @@
         var bytes = [];
         switch (encoding) {
           case "utf-8":
-            bytes = value.split("").map(c => c.charCodeAt(0));
+            bytes = uint8ArrayToBytes(new TextEncoder("utf-8").encode(value))
             break;
           case "hex":
             bytes = hexToBytes(value);
@@ -1324,7 +1324,7 @@
         var value;
         switch (encoding) {
           case "utf-8":
-            value = bytes.map(c => String.fromCharCode(c)).join("");
+            value = new TextDecoder("utf-8").decode(bytesToUint8Array(bytes));
             break;
           case "hex":
             value = bytesToHex(bytes);
