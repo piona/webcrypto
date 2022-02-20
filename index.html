@@ -1215,6 +1215,7 @@
           <input type="button" value="generate" onclick="ecdsaKey(event, 'key', 'keyPub');"/>
           <input type="button" value="key #1" onclick="ecdsaKey(event, 'key', 'keyPub');"/>
           <input type="button" value="key #2" onclick="ecdsaKey(event, 'key', 'keyPub');"/>
+          <input type="button" value="x/y split" onclick="ecdsaPublicSplit(event, 'keyPub');"/>
           <input type="button" value="check" onclick="ecdsaCheckKey(event, 'key', 'keyPub');"/>
         </p>
         <p><b>ECDSA</b>
@@ -1248,6 +1249,7 @@
           <textarea id="sgn" rows="3"></textarea>
           <br/>
           <input type="button" value="clear" onclick="ecdsaParams(event, 'sgn');"/>
+          <input type="button" value="r/s split" onclick="hexSplit(event, 'sgn', -2);"/>
         </p>
       </form>
 
@@ -1336,6 +1338,17 @@
           const currentDataEnc = evt.srcElement.form.getAttribute(target + "CurrentEnc");
           value = fromBytes(uint8ArrayToBytes(new Uint8Array(dataBytes)), currentDataEnc);
           evt.srcElement.form.elements[target].value = value;
+        }
+
+        // split public key hex value in textarea
+        function ecdsaPublicSplit(evt, target) {
+          const currentParamEnc = evt.srcElement.form.getAttribute(target + "CurrentEnc");
+          if (currentParamEnc != "hex") {
+            return;
+          }
+          var value = evt.srcElement.form.elements[target].value.replace(/(\s|0x)/g, "");
+          var regex = new RegExp(".{2}(.{" + (value.length - 2) / 2 + "})", "g");
+          evt.srcElement.form.elements[target].value = value[0] + value[1] + "\n" + value.replace(regex, "$1\n");
         }
 
         async function ecdsaCheckKey(evt, private, public) {
@@ -1706,12 +1719,16 @@
       }
 
       // split hex value in textarea with block-size blocks
+      // negative block value means parts (-2 = two parts)
       function hexSplit(evt, target, block) {
         const currentParamEnc = evt.srcElement.form.getAttribute(target + "CurrentEnc");
         if (currentParamEnc != "hex") {
           return;
         }
         var value = evt.srcElement.form.elements[target].value.replace(/(\s|0x)/g, "");
+        if (block < 0) {
+          block = value.length / 2 / (-block);
+        }
         var regex = new RegExp("(.{" + 2*block + "})", "g");
         evt.srcElement.form.elements[target].value = value.replace(regex, "$1\n");
       }
