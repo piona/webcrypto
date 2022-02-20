@@ -56,6 +56,7 @@
       <button class="tablinks" onclick="showTab(event, 'aesTab')">AES</button>
       <button class="tablinks" onclick="showTab(event, 'shaTab')">SHA</button>
       <button class="tablinks" onclick="showTab(event, 'hmacTab')">HMAC</button>
+      <button class="tablinks" onclick="showTab(event, 'ecdsaTab')">ECDSA</button>
     </div>
 
     <div id ="defaultTab" class="tabcontent">
@@ -1183,6 +1184,316 @@
         document.getElementById("hmac").setAttribute("key" + "CurrentEnc", "hex");
         document.getElementById("hmac").setAttribute("data" + "CurrentEnc", "utf-8");
         document.getElementById("hmac").setAttribute("hash" + "CurrentEnc", "hex");
+      </script>
+    </div>
+
+    <div id="ecdsaTab" class="tabcontent">
+      <form id="ecdsa">
+        <p><b>EC</b>
+          <input type="radio" name="curve" id="p-256" value="P-256" checked/> P-256
+          <input type="radio" name="curve" id="p-384" value="P-384"/> P-384
+          <input type="radio" name="curve" id="p-521" value="P-521"/> P-521
+          <br/>
+        </p>
+        <p><b>Private key</b>
+          <input type="radio" name="keyEnc" value="utf-8" onclick="switchDataEnc(event, 'key');"/> utf-8
+          <input type="radio" name="keyEnc" value="hex" checked onclick="switchDataEnc(event, 'key');"/> hex
+          <input type="radio" name="keyEnc" value="base64" onclick="switchDataEnc(event, 'key');" /> base64
+          <input type="radio" name="keyEnc" value="base64url" onclick="switchDataEnc(event, 'key');"/> base64url
+          <br/>
+          <textarea id="key" rows="2"></textarea>
+          <br/>
+          <b>Public key</b>
+          <input type="radio" name="keyPubEnc" value="utf-8" onclick="switchDataEnc(event, 'keyPub');"/> utf-8
+          <input type="radio" name="keyPubEnc" value="hex" checked onclick="switchDataEnc(event, 'keyPub');"/> hex
+          <input type="radio" name="keyPubEnc" value="base64" onclick="switchDataEnc(event, 'keyPub');" /> base64
+          <input type="radio" name="keyPubEnc" value="base64url" onclick="switchDataEnc(event, 'keyPub');"/> base64url
+          <br/>
+          <textarea id="keyPub" rows="3"></textarea>
+          <br/>
+          <input type="button" value="clear" onclick="ecdsaKey(event, 'key', 'keyPub');"/>
+          <input type="button" value="generate" onclick="ecdsaKey(event, 'key', 'keyPub');"/>
+          <input type="button" value="key #1" onclick="ecdsaKey(event, 'key', 'keyPub');"/>
+          <input type="button" value="key #2" onclick="ecdsaKey(event, 'key', 'keyPub');"/>
+          <input type="button" value="check" onclick="ecdsaCheckKey(event, 'key', 'keyPub');"/>
+        </p>
+        <p><b>ECDSA</b>
+          <input type="radio" name="alg" value="SHA-256" checked/> SHA-256
+          <input type="radio" name="alg" value="SHA-384"/> SHA-384
+          <input type="radio" name="alg" value="SHA-512"/> SHA-512
+          <input type="radio" name="alg" value="SHA-1"/> SHA-1
+          <br/>
+        </p>
+        <p><b>Data</b>
+          <input type="radio" name="dataEnc" value="utf-8" checked onclick="switchDataEnc(event, 'data');"/> utf-8
+          <input type="radio" name="dataEnc" value="hex" onclick="switchDataEnc(event, 'data');"/> hex
+          <input type="radio" name="dataEnc" value="base64" onclick="switchDataEnc(event, 'data');"/> base64
+          <input type="radio" name="dataEnc" value="base64url" onclick="switchDataEnc(event, 'data');"/> base64url
+          <br/>
+          <textarea id="data" rows="10"></textarea>
+          <br/>
+          <input type="button" value="clear" onclick="ecdsaData(event, 'data');"/>
+          <input type="button" value="hello world" onclick="ecdsaData(event, 'data');"/>
+        </p>
+        <p>
+          <input id="sign" type="button" value="sign" onclick="ecdsa(event);"/>
+          <input id="verify" type="button" value="verify" onclick="ecdsa(event);"/>
+        </p>
+        <p>
+          <b>Signature</b>
+          <input type="radio" name="sgnEnc" value="utf-8" onclick="switchDataEnc(event, 'sgn');"/> utf-8
+          <input type="radio" name="sgnEnc" value="hex" checked onclick="switchDataEnc(event, 'sgn');"/> hex
+          <input type="radio" name="sgnEnc" value="base64" onclick="switchDataEnc(event, 'sgn');"/> base64
+          <input type="radio" name="sgnEnc" value="base64url" onclick="switchDataEnc(event, 'sgn');"/> base64url
+          <textarea id="sgn" rows="3"></textarea>
+          <br/>
+          <input type="button" value="clear" onclick="ecdsaParams(event, 'sgn');"/>
+        </p>
+      </form>
+
+      <script>
+        async function ecdsaKey(evt, private, public) {
+          var privateBytes = [];
+          var publicBytes = [];
+          switch (evt.srcElement.value) {
+            case "clear":
+              break;
+            case "generate":
+              // generate key pair
+              const curve = evt.srcElement.form.elements["curve"].value;
+              keyPair = await window.crypto.subtle.generateKey(
+                {
+                  name: "ECDSA",
+                  namedCurve: curve
+                },
+                true, // is key exportable
+                ["sign", "verify"]
+              ).then(function(key) {
+                return key;
+              }).catch(function(err) {
+                evt.srcElement.form.elements[private].value = err;
+              });
+
+              // export private key
+              privateBytes = await window.crypto.subtle.exportKey(
+                "jwk",
+                keyPair["privateKey"]
+              ).then(function(keydata) {
+                return base64UrlToBytes(keydata["d"]);
+              }).catch(function(err) {
+                evt.srcElement.form.elements[private].value = err;
+              });
+
+              // export public key
+              publicBytes = await window.crypto.subtle.exportKey(
+                "raw",
+                keyPair["publicKey"]
+              ).then(function(keydata) {
+                return uint8ArrayToBytes(new Uint8Array(keydata));
+              }).catch(function(err) {
+                evt.srcElement.form.elements[public].value = err;
+              });
+              break;
+            case "key #1":
+              privateBytes = hexToBytes("2768f6b5a126203bcd997554030e394db197403bd5c89fb83854643e34360183");
+              publicBytes = hexToBytes("04842016b1a657a6509aaab6cd069cdb79c6338c8139bca9e036037a88057b0375e7eeea10d448ea4c299da6985c3428cdc0fd9eb76bcca8ccaeae600e07339f99");
+              evt.srcElement.form.elements["curve"][0].checked = true;
+              break;
+            case "key #2":
+              privateBytes = hexToBytes("1fbd6aa212f0e71c71fe72b569611a0862f58b2714ccd541072426780a1d75b60212e09dbee808db4dfd4994598ee223");
+              publicBytes = hexToBytes("04746de76853b4f38ea91fadebdc3c149e987a0e71906603199587c8a8bf3e1f94feff736004ae26966c12324bc95f74c0e59cc2b2019c56762c02cc82a8756472af447789a900ea4fd5b2231725a5b333e7d4377dec95556b5c39dc354314434d");
+              evt.srcElement.form.elements["curve"][1].checked = true;
+              break;
+            default:
+              console.log("Event not supported: " + evt.srcElement.value);
+              break;
+          }
+
+          // convert params
+          const currentPrivateEnc = evt.srcElement.form.getAttribute(private + "CurrentEnc");
+          privateValue = fromBytes(privateBytes, currentPrivateEnc);
+          evt.srcElement.form.elements[private].value = privateValue;
+
+          const currentPublicEnc = evt.srcElement.form.getAttribute(public + "CurrentEnc");
+          publicValue = fromBytes(publicBytes, currentPublicEnc);
+          evt.srcElement.form.elements[public].value = publicValue;
+        }
+
+        function ecdsaData(evt, target) {
+          var dataBytes = [];
+          switch (evt.srcElement.value) {
+            case "clear":
+              break;
+            case "hello world":
+              dataBytes = toBytes("hello world", "utf-8");
+              break;
+            default:
+              console.log("Event not supported: " + evt.srcElement.value);
+              break;
+          }
+
+          // convert param
+          const currentDataEnc = evt.srcElement.form.getAttribute(target + "CurrentEnc");
+          value = fromBytes(uint8ArrayToBytes(new Uint8Array(dataBytes)), currentDataEnc);
+          evt.srcElement.form.elements[target].value = value;
+        }
+
+        async function ecdsaCheckKey(evt, private, public) {
+          const curve = evt.srcElement.form.elements["curve"].value;
+
+          var privateBytes = toBytes(evt.srcElement.form.elements[private].value, evt.srcElement.form.getAttribute("keyCurrentEnc"));
+          var publicBytes = toBytes(evt.srcElement.form.elements[public].value, evt.srcElement.form.getAttribute("keyPubCurrentEnc"));
+
+          // create key pair structure
+          const keyPair = {
+            "crv": curve,
+            "d": bytesToBase64Url(privateBytes),
+            "ext": true,
+            "key_ops": ["sign", "verify"],
+            "kty": "EC",
+            "x": bytesToBase64Url(publicBytes.slice(1, (publicBytes.length - 1) / 2 + 1)), // x part, 04 removed
+            "y": bytesToBase64Url(publicBytes.slice(publicBytes.length - (publicBytes.length - 1) / 2), publicBytes.length) // y part
+          };
+
+          // check private key import
+          privateKey = await window.crypto.subtle.importKey(
+            "jwk",
+            keyPair,
+            {
+              name: "ECDSA",
+              namedCurve: curve
+            },
+            true,
+            ["sign"]
+          ).then(function(keydata){
+            return keydata;
+          }).catch(function(err) {
+            evt.srcElement.form.elements[private].value = err;
+          });
+
+          // check public key import
+          delete keyPair['d']; // must be removed
+          publicKey = await window.crypto.subtle.importKey(
+            "jwk",
+            keyPair,
+            {
+              name: "ECDSA",
+              namedCurve: curve
+            },
+            true,
+            ["verify"]
+          ).then(function(keydata){
+            return keydata;
+          }).catch(function(err) {
+            evt.srcElement.form.elements[private].value = err;
+          });
+        }
+
+        async function ecdsa(evt) {
+          const alg = evt.srcElement.form.elements["alg"].value;
+          const curve = evt.srcElement.form.elements["curve"].value;
+          const currentSgnEnc = evt.srcElement.form.getAttribute("sgnCurrentEnc");
+
+          var privateBytes = toBytes(evt.srcElement.form.elements["key"].value, evt.srcElement.form.getAttribute("keyCurrentEnc"));
+          var publicBytes = toBytes(evt.srcElement.form.elements["keyPub"].value, evt.srcElement.form.getAttribute("keyPubCurrentEnc"));
+          var dataBytes = toBytes(evt.srcElement.form.elements["data"].value, evt.srcElement.form.getAttribute("dataCurrentEnc"));
+
+          if (evt.srcElement.value == "sign") {
+            if (privateBytes == null || publicBytes == null || dataBytes == null) {
+              evt.srcElement.form.elements["sgn"].value = "error: bad input data";
+              return;
+            }
+            // create key pair structure
+            const keyPair = {
+              "crv": curve,
+              "d": bytesToBase64Url(privateBytes),
+              "ext": true,
+              "key_ops": ["sign"],
+              "kty": "EC",
+              "x": bytesToBase64Url(publicBytes.slice(1, (publicBytes.length - 1) / 2 + 1)), // x part, 04 removed
+              "y": bytesToBase64Url(publicBytes.slice(publicBytes.length - (publicBytes.length - 1) / 2), publicBytes.length) // y part
+            };
+
+            privateKey = await window.crypto.subtle.importKey(
+              "jwk",
+              keyPair,
+              {
+                name: "ECDSA",
+                namedCurve: curve
+              },
+              true,
+              ["sign"]
+            ).then(function(keydata){
+              return keydata;
+            }).catch(function(err) {
+              evt.srcElement.form.elements["sgn"].value = err;
+            });
+
+            window.crypto.subtle.sign(
+              {
+                name: "ECDSA",
+                hash: {name: alg}
+              },
+              privateKey,
+              bytesToUint8Array(dataBytes)
+            ).then(function(ecdsa) {
+              value = fromBytes(uint8ArrayToBytes(new Uint8Array(ecdsa)), currentSgnEnc);
+              evt.srcElement.form.elements["sgn"].value = value;
+            }).catch(function(err){
+              evt.srcElement.form.elements["sgn"].value = err;
+            });
+          } else {
+            if (publicBytes == null || dataBytes == null) {
+              evt.srcElement.form.elements["sgn"].value = "error: bad input data";
+              return;
+            }
+            var sgnBytes = toBytes(evt.srcElement.form.elements["sgn"].value, currentSgnEnc);
+            // create public key structure
+            const keyPub = {
+              "crv": curve,
+              "ext": true,
+              "key_ops": ["verify"],
+              "kty": "EC",
+              "x": bytesToBase64Url(publicBytes.slice(1, (publicBytes.length - 1) / 2 + 1)), // x part, 04 removed
+              "y": bytesToBase64Url(publicBytes.slice(publicBytes.length - (publicBytes.length - 1) / 2), publicBytes.length) // y part
+            };
+
+            publicKey = await window.crypto.subtle.importKey(
+              "jwk",
+              keyPub,
+              {
+                name: "ECDSA",
+                namedCurve: curve
+              },
+              true,
+              ["verify"]
+            ).then(function(keydata){
+              return keydata;
+            }).catch(function(err) {
+              evt.srcElement.form.elements["sgn"].value = err;
+            });
+
+            window.crypto.subtle.verify(
+              {
+                name: "ECDSA",
+                hash: {name: alg}
+              },
+              publicKey,
+              bytesToUint8Array(sgnBytes),
+              bytesToUint8Array(dataBytes)
+            ).then(function(isvalid) {
+              evt.srcElement.form.elements["sgn"].value = isvalid;
+            }).catch(function(err){
+              evt.srcElement.form.elements["sgn"].value = err;
+            });
+          }
+        }
+
+        // initialize fields
+        document.getElementById("ecdsa").setAttribute("key" + "CurrentEnc", "hex");
+        document.getElementById("ecdsa").setAttribute("keyPub" + "CurrentEnc", "hex");
+        document.getElementById("ecdsa").setAttribute("data" + "CurrentEnc", "utf-8");
+        document.getElementById("ecdsa").setAttribute("sgn" + "CurrentEnc", "hex");
       </script>
     </div>
 
