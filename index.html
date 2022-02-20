@@ -88,8 +88,8 @@
       <script>
         // reencode data to output fields
         function reencodeData(evt) {
-          var data = evt.srcElement.value;
-          var dataEnc = evt.srcElement.id;
+          let data = evt.srcElement.value;
+          let dataEnc = evt.srcElement.id;
 
           evt.srcElement.form.elements["utf-8"].value = data;
           evt.srcElement.form.elements["hex"].value = data;
@@ -141,17 +141,17 @@
           <input id="crypt" type="button" value="encrypt/decrypt" onclick="otpEncrypt(event);" disabled/>
           <input id="auto" type="checkbox" checked onclick="xorToggleUpdate(event);"/> auto
         </p>
-        <p>
+        <p id="output">
           <b>Output</b>
           <input type="radio" name="cipherEnc" value="utf-8" onclick="switchDataEnc(event, 'cipher');"/> utf-8
           <input type="radio" name="cipherEnc" value="hex" checked onclick="switchDataEnc(event, 'cipher');"/> hex
           <input type="radio" name="cipherEnc" value="base64" onclick="switchDataEnc(event, 'cipher');"/> base64
           <input type="radio" name="cipherEnc" value="base64url" onclick="switchDataEnc(event, 'cipher');"/> base64url
           <textarea id="cipher" rows="5" readonly></textarea>
-          <br/>
           <input type="button" value="copy as input"
                                onclick="document.getElementById('otp').elements['plain'].value = document.getElementById('otp').elements['cipher'].value;
                                otpEncryptAuto(event);"/>
+          <span class="status"></span>
         </p>
       </form>
 
@@ -162,32 +162,34 @@
           const currentKeyEnc = evt.srcElement.form.getAttribute("keyCurrentEnc");
           const currentCipherEnc = evt.srcElement.form.getAttribute("cipherCurrentEnc");
 
-          var plain = evt.srcElement.form.elements["plain"].value;
+          let plain = evt.srcElement.form.elements["plain"].value;
           console.log("Plain as " + currentPlainEnc + ": " + plain);
 
-          plainBytes = toBytes(plain, currentPlainEnc);
+          let plainBytes = toBytes(plain, currentPlainEnc);
           console.log("Plain: " + plainBytes);
 
           if (plainBytes == null) {
-            evt.srcElement.form.elements["cipher"].value = "error: bad plain data";
+            evt.srcElement.form.elements["cipher"].value = "";
+            setStatus("otpTab", 0, "<b>error</b>: bad plain data");
             return;
           }
 
-          var key = evt.srcElement.form.elements["key"].value;
+          let key = evt.srcElement.form.elements["key"].value;
           console.log("Key as " + currentKeyEnc + ": " + key);
 
-          keyBytes = toBytes(key, currentKeyEnc);
+          let keyBytes = toBytes(key, currentKeyEnc);
           console.log("Key: " + keyBytes);
 
           if (keyBytes == null) {
-            evt.srcElement.form.elements["cipher"].value = "error: bad key data";
+            evt.srcElement.form.elements["cipher"].value = "";
+            setStatus("otpTab", 0, "<b>error</b>: bad key data");
             return;
           }
 
-          cipher = xorBytes(plainBytes, keyBytes);
+          let cipher = xorBytes(plainBytes, keyBytes);
 
           console.log("Cipher encoding: " + currentCipherEnc);
-          value = fromBytes(uint8ArrayToBytes(new Uint8Array(cipher)), currentCipherEnc);
+          let value = fromBytes(uint8ArrayToBytes(new Uint8Array(cipher)), currentCipherEnc);
           console.log("Cipher: " + cipher);
           console.log("Cipher as " + currentCipherEnc + ": " + value);
 
@@ -233,21 +235,22 @@
           const currentKeyEnc = evt.srcElement.form.getAttribute("keyCurrentEnc");
           const currentCipherEnc = evt.srcElement.form.getAttribute("cipherCurrentEnc");
 
-          var plain = evt.srcElement.form.elements["plain"].value;
+          let plain = evt.srcElement.form.elements["plain"].value;
           console.log("Plain as " + currentPlainEnc + ": " + plain);
 
-          plainBytes = toBytes(plain, currentPlainEnc);
+          let plainBytes = toBytes(plain, currentPlainEnc);
           console.log("Plain: " + plainBytes);
 
           if (plainBytes == null) {
-            evt.srcElement.form.elements["cipher"].value = "error: bad plain data";
+            evt.srcElement.form.elements["cipher"].value = "";
+            setStatus("otpTab", 0, "<b>error</b>: bad plain data");
             return;
           }
 
-          var key = evt.srcElement.form.elements["key"].value;
+          let key = evt.srcElement.form.elements["key"].value;
           console.log("Key as " + currentKeyEnc + ": " + key);
 
-          keyBytes = toBytes(key, currentKeyEnc);
+          let keyBytes = toBytes(key, currentKeyEnc);
           console.log("Key: " + keyBytes);
 
           if (evt.srcElement.value == "generate") {
@@ -255,16 +258,17 @@
           }
 
           if (keyBytes == null) {
-            evt.srcElement.form.elements["cipher"].value = "error: bad key data";
+            evt.srcElement.form.elements["cipher"].value = "";
+            setStatus("otpTab", 0, "<b>error</b>: bad key data");
             return;
           }
 
-          keyBytesFixed = [];
-          for (var i = 0; i < plainBytes.length; i++) {
+          let keyBytesFixed = [];
+          for (let i = 0; i < plainBytes.length; i++) {
             keyBytesFixed.push(keyBytes[i % keyBytes.length]);
           }
 
-          value = fromBytes(uint8ArrayToBytes(new Uint8Array(keyBytesFixed)), currentKeyEnc);
+          let value = fromBytes(uint8ArrayToBytes(new Uint8Array(keyBytesFixed)), currentKeyEnc);
           evt.srcElement.form.elements["key"].value = value;
         }
 
@@ -306,6 +310,7 @@
           <input type="button" value="clear" onclick="document.getElementById('keyshare').elements['share'].value = '';"/>
           <input type="button" value="split" onclick="keyshareSplit(event);"/>
           <input type="button" value="combine" onclick="keyshareCombine(event);"/>
+          <span class="status"></span>
         </p>
       </form>
 
@@ -314,28 +319,28 @@
         function keyshareSplit(evt) {
           const currentKeyEnc = evt.srcElement.form.getAttribute("keyCurrentEnc");
 
-          var key = evt.srcElement.form.elements["key"].value;
+          let key = evt.srcElement.form.elements["key"].value;
           console.log("Key as " + currentKeyEnc + ": " + key);
 
-          keyBytes = toBytes(key, currentKeyEnc);
+          let keyBytes = toBytes(key, currentKeyEnc);
           console.log("Key: " + keyBytes);
 
           if (keyBytes == null) {
-            evt.srcElement.form.elements["shares"].value = "error: bad key data";
+            evt.srcElement.form.elements["shares"].value = "";
+            setStatus("keyshareTab", 0, "<b>error</b>: bad key data");
             return;
           }
 
-          shares = evt.srcElement.form.elements["shares"].value;
+          let shares = evt.srcElement.form.elements["shares"].value;
           console.log("Shares: " + shares);
 
-          var xorValue = uint8ArrayToBytes(new Uint8Array(keyBytes.length));
-          console.log(xorValue);
+          let xorValue = uint8ArrayToBytes(new Uint8Array(keyBytes.length));
 
-          var value = "";
+          let value = "";
 
           // n - 1 random components
           while (shares - 1 > 0) {
-            var component = uint8ArrayToBytes(window.crypto.getRandomValues(new Uint8Array(keyBytes.length)));
+            let component = uint8ArrayToBytes(window.crypto.getRandomValues(new Uint8Array(keyBytes.length)));
             xorValue = xorBytes(xorValue, component);
             value += fromBytes(component, currentKeyEnc) + "\n";
             shares--;
@@ -351,25 +356,25 @@
         function keyshareCombine(evt) {
           const currentKeyEnc = evt.srcElement.form.getAttribute("keyCurrentEnc");
 
-          var components = evt.srcElement.form.elements["share"].value.split("\n");
+          let components = evt.srcElement.form.elements["share"].value.split("\n");
 
           // first component
-          var xorValue = toBytes(components[0], currentKeyEnc);
+          let xorValue = toBytes(components[0], currentKeyEnc);
 
           // n - 1 components
-          for (var i = 1; i < components.length; i++) {
-            var component = toBytes(components[i], currentKeyEnc);
+          for (let i = 1; i < components.length; i++) {
+            let component = toBytes(components[i], currentKeyEnc);
             xorValue = xorBytes(xorValue, component);
           }
 
-          value = fromBytes(xorValue, currentKeyEnc);
+          let value = fromBytes(xorValue, currentKeyEnc);
 
           evt.srcElement.form.elements["key"].value = value;
         }
 
         function keyshareKey(evt) {
           // some switch cases ended with return
-          var keyBytes = [];
+          let keyBytes = [];
           switch (evt.srcElement.value) {
             case "clear":
               break;
@@ -389,7 +394,7 @@
 
           // convert key
           const currentKeyEnc = evt.srcElement.form.getAttribute("keyCurrentEnc");
-          value = fromBytes(uint8ArrayToBytes(new Uint8Array(keyBytes)), currentKeyEnc);
+          let value = fromBytes(uint8ArrayToBytes(new Uint8Array(keyBytes)), currentKeyEnc);
           evt.srcElement.form.elements["key"].value = value;
         }
 
@@ -497,6 +502,7 @@
           <input type="button" value="copy as input"
                                onclick="document.getElementById('aes').elements['input'].value = document.getElementById('aes').elements['output'].value;"/>
           <input type="button" value="hex split" onclick="hexSplit(event, 'output', 16);"/>
+          <span class="status"></span>
         </p>
         <span id="aesAuthTag" hidden>
           <p><b>Auth tag length</b>
@@ -531,8 +537,7 @@
         // show/hide fields when switching mode of operation
         function aesMode(evt) {
           console.log("AES mode: " + evt.srcElement.value);
-          var aesTab = document.getElementById("aesTab");
-          console.log(evt);
+          let aesTab = document.getElementById("aesTab");
           switch (evt.srcElement.value) {
             case "ECB":
               // padding
@@ -579,7 +584,7 @@
         }
 
         function aesParams(evt, target) {
-          var paramBytes = [];
+          let paramBytes = [];
           switch (evt.srcElement.value) {
             case "clear":
               break;
@@ -621,7 +626,7 @@
 
           // convert param
           const currentParamEnc = evt.srcElement.form.getAttribute(target + "CurrentEnc");
-          value = fromBytes(uint8ArrayToBytes(new Uint8Array(paramBytes)), currentParamEnc);
+          let value = fromBytes(uint8ArrayToBytes(new Uint8Array(paramBytes)), currentParamEnc);
           evt.srcElement.form.elements[target].value = value;
         }
 
@@ -651,7 +656,8 @@
           ).then(function(key) {
             return key;
           }).catch(function(err) {
-            evt.srcElement.form.elements["output"].value = err;
+            evt.srcElement.form.elements["output"].value = "";
+            setStatus("aesTab", 0, "<b>error</b>: " + err);
           });
 
           if (aesKey == null) {
@@ -659,11 +665,11 @@
           }
 
           // read input, param and additional data
-          var inputBytes = toBytes(evt.srcElement.form.elements["input"].value, evt.srcElement.form.getAttribute("inputCurrentEnc"));
-          var paramBytes = toBytes(evt.srcElement.form.elements["param"].value, evt.srcElement.form.getAttribute("paramCurrentEnc"));
-          var aadBytes = toBytes(evt.srcElement.form.elements["aad"].value, evt.srcElement.form.getAttribute("aadCurrentEnc"));
-          var authTagBytes = toBytes(evt.srcElement.form.elements["authTag"].value, evt.srcElement.form.getAttribute("authTagCurrentEnc"));
-          var authTagLength = evt.srcElement.form.elements["authTagLength"].value / 8;
+          let inputBytes = toBytes(evt.srcElement.form.elements["input"].value, evt.srcElement.form.getAttribute("inputCurrentEnc"));
+          let paramBytes = toBytes(evt.srcElement.form.elements["param"].value, evt.srcElement.form.getAttribute("paramCurrentEnc"));
+          let aadBytes = toBytes(evt.srcElement.form.elements["aad"].value, evt.srcElement.form.getAttribute("aadCurrentEnc"));
+          let authTagBytes = toBytes(evt.srcElement.form.elements["authTag"].value, evt.srcElement.form.getAttribute("authTagCurrentEnc"));
+          let authTagLength = evt.srcElement.form.elements["authTagLength"].value / 8;
 
           if ((mode == "ECB" || mode == "CBC") && (padding == "None" || oper == "decrypt")) {
             if (inputBytes == null || inputBytes.length == 0 || inputBytes.length % 16 != 0) {
@@ -672,15 +678,15 @@
             }
           }
 
-          var output = [];
+          let output = [];
           console.log("inputBytes length = " + inputBytes.length);
 
           if (mode == "ECB" && oper == "encrypt") { // ECB = use CBC mode for each block
-            for (var i = 0; i <= inputBytes.length; i += 16) {
+            for (let i = 0; i <= inputBytes.length; i += 16) {
               if (padding == "None" && i == inputBytes.length) {
                 break;
               }
-              var block = new Uint8Array(inputBytes.slice(i, i + 16));
+              let block = new Uint8Array(inputBytes.slice(i, i + 16));
               const encryptedBlock = await window.crypto.subtle.encrypt(
                 {
                   name: "AES-CBC",
@@ -688,10 +694,11 @@
                 },
                 aesKey,
                 block
-              ).then(function(encrypted){
+              ).then(function(encrypted) {
                 return encrypted;
-              }).catch(function(err){
-                evt.srcElement.form.elements["output"].value = err;
+              }).catch(function(err) {
+                evt.srcElement.form.elements["output"].value = "";
+                setStatus("aesTab", 0, "<b>error</b>: " + err);
               });
               if (encryptedBlock == null) {
                 return;
@@ -699,7 +706,7 @@
               output = output.concat(uint8ArrayToBytes(new Uint8Array(encryptedBlock, 0, 16)));
             }
           } else if (mode == "ECB" && oper == "decrypt") {
-            for (var i = 0; i < inputBytes.length; i += 16) {
+            for (let i = 0; i < inputBytes.length; i += 16) {
               // prepare empty padding
               const emptyPadding = await window.crypto.subtle.encrypt(
                 {
@@ -708,21 +715,23 @@
                 },
                 aesKey,
                 new Uint8Array(xorBytes(uint8ArrayToBytes(new Uint8Array(Array(16).fill(16))), inputBytes.slice(i, i + 16)))
-              ).then(function(encrypted){
+              ).then(function(encrypted) {
                 return encrypted;
-              }).catch(function(err){
-                evt.srcElement.form.elements["output"].value = err;
+              }).catch(function(err) {
+                evt.srcElement.form.elements["output"].value = "";
+                setStatus("aesTab", 0, "<b>error</b>: " + err);
               });
               console.log(emptyPadding);
-              var emptyPaddingBytes = uint8ArrayToBytes(new Uint8Array(emptyPadding, 0, 16))
+              let emptyPaddingBytes = uint8ArrayToBytes(new Uint8Array(emptyPadding, 0, 16))
 
+              let block = [];
               if (i != inputBytes.length - 16) {
-                var block = new Uint8Array(inputBytes.slice(i, i + 16).concat(emptyPaddingBytes));
+                block = new Uint8Array(inputBytes.slice(i, i + 16).concat(emptyPaddingBytes));
               } else {
                 if (padding == "None") {
-                  var block = new Uint8Array(inputBytes.slice(i, i + 16).concat(emptyPaddingBytes));
+                  block = new Uint8Array(inputBytes.slice(i, i + 16).concat(emptyPaddingBytes));
                 } else {
-                  var block = new Uint8Array(inputBytes.slice(i, i + 16));
+                  block = new Uint8Array(inputBytes.slice(i, i + 16));
                 }
               }
               const decryptedBlock = await window.crypto.subtle.decrypt(
@@ -732,11 +741,11 @@
                 },
                 aesKey,
                 block
-              ).then(function(decrypted){
+              ).then(function(decrypted) {
                 return decrypted;
-              }).catch(function(err){
-                console.log(err);
-                evt.srcElement.form.elements["output"].value = err;
+              }).catch(function(err) {
+                evt.srcElement.form.elements["output"].value = "";
+                setStatus("aesTab", 0, "<b>error</b>: " + err);
               });
               if (decryptedBlock == null) {
                 return;
@@ -749,7 +758,7 @@
               }
             }
           } else if (mode == "CBC" && oper == "encrypt") {
-            var blocks = new Uint8Array(inputBytes);
+            let blocks = new Uint8Array(inputBytes);
             const encryptedBlocks = await window.crypto.subtle.encrypt(
               {
                 name: "AES-CBC",
@@ -757,10 +766,11 @@
               },
               aesKey,
               blocks
-            ).then(function(encrypted){
+            ).then(function(encrypted) {
               return encrypted;
-            }).catch(function(err){
-              evt.srcElement.form.elements["output"].value = err;
+            }).catch(function(err) {
+              evt.srcElement.form.elements["output"].value = "";
+              setStatus("aesTab", 0, "<b>error</b>: " + err);
             });
             if (encryptedBlocks == null) {
               return;
@@ -779,16 +789,17 @@
                 },
                 aesKey,
                 new Uint8Array(xorBytes(uint8ArrayToBytes(new Uint8Array(Array(16).fill(16))), inputBytes.slice(inputBytes.length - 16, inputBytes.length)))
-              ).then(function(encrypted){
+              ).then(function(encrypted) {
                 return encrypted;
-              }).catch(function(err){
-                evt.srcElement.form.elements["output"].value = err;
+              }).catch(function(err) {
+                evt.srcElement.form.elements["output"].value = "";
+                setStatus("aesTab", 0, "<b>error</b>: " + err);
               });
               console.log(emptyPadding);
-              var emptyPaddingBytes = uint8ArrayToBytes(new Uint8Array(emptyPadding, 0, 16))
+              let emptyPaddingBytes = uint8ArrayToBytes(new Uint8Array(emptyPadding, 0, 16))
               inputBytes = inputBytes.concat(emptyPaddingBytes);
             }
-            var blocks = new Uint8Array(inputBytes);
+            let blocks = new Uint8Array(inputBytes);
             const decryptedBlocks = await window.crypto.subtle.decrypt(
               {
                 name: "AES-CBC",
@@ -796,17 +807,18 @@
               },
               aesKey,
               blocks
-            ).then(function(decrypted){
+            ).then(function(decrypted) {
               return decrypted;
-            }).catch(function(err){
-              evt.srcElement.form.elements["output"].value = err;
+            }).catch(function(err) {
+              evt.srcElement.form.elements["output"].value = "";
+              setStatus("aesTab", 0, "<b>error</b>: " + err);
             });
             if (decryptedBlocks == null) {
               return;
             }
             output = uint8ArrayToBytes(new Uint8Array(decryptedBlocks));
           } else if (mode == "CTR" && oper == "encrypt") {
-            var blocks = new Uint8Array(inputBytes);
+            let blocks = new Uint8Array(inputBytes);
             const encryptedBlocks = await window.crypto.subtle.encrypt(
               {
                 name: "AES-CTR",
@@ -815,17 +827,18 @@
               },
               aesKey,
               blocks
-            ).then(function(encrypted){
+            ).then(function(encrypted) {
               return encrypted;
-            }).catch(function(err){
-              evt.srcElement.form.elements["output"].value = err;
+            }).catch(function(err) {
+              evt.srcElement.form.elements["output"].value = "";
+              setStatus("aesTab", 0, "<b>error</b>: " + err);
             });
             if (encryptedBlocks == null) {
               return;
             }
             output = uint8ArrayToBytes(new Uint8Array(encryptedBlocks));
           } else if (mode == "CTR" && oper == "decrypt") {
-            var blocks = new Uint8Array(inputBytes);
+            let blocks = new Uint8Array(inputBytes);
             const decryptedBlocks = await window.crypto.subtle.decrypt(
               {
                 name: "AES-CTR",
@@ -834,17 +847,18 @@
               },
               aesKey,
               blocks
-            ).then(function(decrypted){
+            ).then(function(decrypted) {
               return decrypted;
-            }).catch(function(err){
-              evt.srcElement.form.elements["output"].value = err;
+            }).catch(function(err) {
+              evt.srcElement.form.elements["output"].value = "";
+              setStatus("aesTab", 0, "<b>error</b>: " + err);
             });
             if (decryptedBlocks == null) {
               return;
             }
             output = uint8ArrayToBytes(new Uint8Array(decryptedBlocks));
           } else if (mode == "GCM" && oper == "encrypt") {
-            var blocks = new Uint8Array(inputBytes);
+            let blocks = new Uint8Array(inputBytes);
             const encryptedBlocks = await window.crypto.subtle.encrypt(
               {
                 name: "AES-GCM",
@@ -854,10 +868,11 @@
               },
               aesKey,
               blocks
-            ).then(function(encrypted){
+            ).then(function(encrypted) {
               return encrypted;
-            }).catch(function(err){
-              evt.srcElement.form.elements["output"].value = err;
+            }).catch(function(err) {
+              evt.srcElement.form.elements["output"].value = "";
+              setStatus("aesTab", 0, "<b>error</b>: " + err);
             });
             if (encryptedBlocks == null) {
               return;
@@ -867,7 +882,7 @@
             output = output.slice(0, output.length - authTagLength);
           } else if (mode == "GCM" && oper == "decrypt") {
             inputBytes = inputBytes.concat(authTagBytes);
-            var blocks = new Uint8Array(inputBytes);
+            let blocks = new Uint8Array(inputBytes);
             const decryptedBlocks = await window.crypto.subtle.decrypt(
               {
                 name: "AES-GCM",
@@ -877,10 +892,11 @@
               },
               aesKey,
               blocks
-            ).then(function(decrypted){
+            ).then(function(decrypted) {
               return decrypted;
-            }).catch(function(err){
-              evt.srcElement.form.elements["output"].value = err;
+            }).catch(function(err) {
+              evt.srcElement.form.elements["output"].value = "";
+              setStatus("aesTab", 0, "<b>error</b>: " + err);
             });
             if (decryptedBlocks == null) {
               return;
@@ -888,7 +904,7 @@
             output = uint8ArrayToBytes(new Uint8Array(decryptedBlocks));
           }
 
-          value = fromBytes(output, evt.srcElement.form.getAttribute("outputCurrentEnc"));
+          let value = fromBytes(output, evt.srcElement.form.getAttribute("outputCurrentEnc"));
           evt.srcElement.form.elements["output"].value = value;
 
           if (authTag != null) {
@@ -947,6 +963,7 @@
           <input type="button" value="copy as data"
                                onclick="document.getElementById('sha').elements['data'].value = document.getElementById('sha').elements['hash'].value;
                                shaHashAuto(event);"/>
+          <span class="status"></span>
         </p>
       </form>
 
@@ -958,14 +975,15 @@
           const alg = evt.srcElement.form.elements["alg"].value;
           console.log("Algorithm: " + alg);
 
-          var value = evt.srcElement.form.elements["data"].value;
+          let value = evt.srcElement.form.elements["data"].value;
           console.log("Data as " + currentDataEnc + ": " + value);
 
-          bytes = toBytes(value, currentDataEnc);
+          let bytes = toBytes(value, currentDataEnc);
           console.log("Data: " + bytes);
 
           if (bytes == null) {
-            evt.srcElement.form.elements["hash"].value = "error: bad input data";
+            evt.srcElement.form.elements["hash"].value = "";
+            setStatus("shaTab", 0, "<b>error</b>: bad input data");
             return;
           }
 
@@ -974,14 +992,14 @@
               name: alg
             },
             bytesToUint8Array(bytes)
-          ).then(function(hash){
+          ).then(function(hash) {
             console.log("Hash encoding: " + currentHashEnc);
-            value = fromBytes(uint8ArrayToBytes(new Uint8Array(hash)), currentHashEnc);
+            let value = fromBytes(uint8ArrayToBytes(new Uint8Array(hash)), currentHashEnc);
             console.log("Hash: " + hash);
             console.log("Hash as " + currentHashEnc + ": " + value);
 
             evt.srcElement.form.elements["hash"].value = value;
-          }).catch(function(err){
+          }).catch(function(err) {
             console.error(err);
           });
         }
@@ -1061,12 +1079,13 @@
           <input type="button" value="256 bit" onclick="hmacParams(event, 'hash');"/>
           <input type="button" value="384 bit" onclick="hmacParams(event, 'hash');"/>
           <input type="button" value="512 bit" onclick="hmacParams(event, 'hash');"/>
+          <span class="status"></span>
         </p>
       </form>
 
       <script>
         function hmacParams(evt, target) {
-          var paramBytes = [];
+          let paramBytes = [];
           switch (evt.srcElement.value) {
             case "clear":
               break;
@@ -1104,7 +1123,7 @@
 
           // convert param
           const currentParamEnc = evt.srcElement.form.getAttribute(target + "CurrentEnc");
-          value = fromBytes(uint8ArrayToBytes(new Uint8Array(paramBytes)), currentParamEnc);
+          let value = fromBytes(uint8ArrayToBytes(new Uint8Array(paramBytes)), currentParamEnc);
           evt.srcElement.form.elements[target].value = value;
         }
 
@@ -1115,16 +1134,17 @@
 
           const currentHashEnc = evt.srcElement.form.getAttribute("hashCurrentEnc");
 
-          var keyBytes = toBytes(evt.srcElement.form.elements["key"].value, evt.srcElement.form.getAttribute("keyCurrentEnc"));
-          var dataBytes = toBytes(evt.srcElement.form.elements["data"].value, evt.srcElement.form.getAttribute("dataCurrentEnc"));
-          var hmacBytes = toBytes(evt.srcElement.form.elements["hash"].value, currentHashEnc);
+          let keyBytes = toBytes(evt.srcElement.form.elements["key"].value, evt.srcElement.form.getAttribute("keyCurrentEnc"));
+          let dataBytes = toBytes(evt.srcElement.form.elements["data"].value, evt.srcElement.form.getAttribute("dataCurrentEnc"));
+          let hmacBytes = toBytes(evt.srcElement.form.elements["hash"].value, currentHashEnc);
 
           console.log("Key: " + keyBytes);
           console.log("Data: " + dataBytes);
           console.log("HMAC: " + hmacBytes);
 
           if (keyBytes == null || dataBytes == null) {
-            evt.srcElement.form.elements["hash"].value = "error: bad input data";
+            evt.srcElement.form.elements["hash"].value = "";
+            setStatus("hmacTab", 0, "<b>error</b>: bad input data");
             return;
           }
 
@@ -1141,7 +1161,8 @@
           ).then(function(key) {
             return key;
           }).catch(function(err) {
-            evt.srcElement.form.elements["hash"].value = err;
+            evt.srcElement.form.elements["hash"].value = "";
+            setStatus("hmacTab", 0, "<b>error</b>: " + err);
           });
 
           if (hmacKey == null) {
@@ -1161,8 +1182,9 @@
               console.log("HMAC as " + currentHashEnc + ": " + value);
 
               evt.srcElement.form.elements["hash"].value = value;
-            }).catch(function(err){
-              evt.srcElement.form.elements["hash"].value = err;
+            }).catch(function(err) {
+              evt.srcElement.form.elements["hash"].value = "";
+              setStatus("hmacTab", 0, "<b>error</b>: " + err);
             });
           } else {
             window.crypto.subtle.verify(
@@ -1173,9 +1195,10 @@
               bytesToUint8Array(hmacBytes),
               bytesToUint8Array(dataBytes)
             ).then(function(isvalid) {
-              evt.srcElement.form.elements["hash"].value = isvalid;
-            }).catch(function(err){
-              evt.srcElement.form.elements["hash"].value = err;
+              setStatus("hmacTab", 0, "<b>status</b>: " + isvalid);
+            }).catch(function(err) {
+              evt.srcElement.form.elements["hash"].value = "";
+              setStatus("hmacTab", 0, "<b>error</b>: " + err);
             });
           }
         }
@@ -1217,6 +1240,7 @@
           <input type="button" value="key #2" onclick="ecdsaKey(event, 'key', 'keyPub');"/>
           <input type="button" value="x/y split" onclick="ecdsaPublicSplit(event, 'keyPub');"/>
           <input type="button" value="check" onclick="ecdsaCheckKey(event, 'key', 'keyPub');"/>
+          <span class="status"></span>
         </p>
         <p><b>ECDSA</b>
           <input type="radio" name="alg" value="SHA-256" checked/> SHA-256
@@ -1248,22 +1272,23 @@
           <input type="radio" name="sgnEnc" value="base64url" onclick="switchDataEnc(event, 'sgn');"/> base64url
           <textarea id="sgn" rows="3"></textarea>
           <br/>
-          <input type="button" value="clear" onclick="ecdsaParams(event, 'sgn');"/>
+          <input type="button" value="clear" onclick="ecdsaData(event, 'sgn');"/>
           <input type="button" value="r/s split" onclick="hexSplit(event, 'sgn', -2);"/>
+          <span class="status"></span>
         </p>
       </form>
 
       <script>
         async function ecdsaKey(evt, private, public) {
-          var privateBytes = [];
-          var publicBytes = [];
+          let privateBytes = [];
+          let publicBytes = [];
           switch (evt.srcElement.value) {
             case "clear":
               break;
             case "generate":
               // generate key pair
               const curve = evt.srcElement.form.elements["curve"].value;
-              keyPair = await window.crypto.subtle.generateKey(
+              const keyPair = await window.crypto.subtle.generateKey(
                 {
                   name: "ECDSA",
                   namedCurve: curve
@@ -1273,7 +1298,7 @@
               ).then(function(key) {
                 return key;
               }).catch(function(err) {
-                evt.srcElement.form.elements[private].value = err;
+                setStatus("ecdsaTab", 0, "<b>error</b>: " + err);
               });
 
               // export private key
@@ -1283,7 +1308,7 @@
               ).then(function(keydata) {
                 return base64UrlToBytes(keydata["d"]);
               }).catch(function(err) {
-                evt.srcElement.form.elements[private].value = err;
+                setStatus("ecdsaTab", 0, "<b>error</b>: " + err);
               });
 
               // export public key
@@ -1293,7 +1318,7 @@
               ).then(function(keydata) {
                 return uint8ArrayToBytes(new Uint8Array(keydata));
               }).catch(function(err) {
-                evt.srcElement.form.elements[public].value = err;
+                setStatus("ecdsaTab", 0, "<b>error</b>: " + err);
               });
               break;
             case "key #1":
@@ -1313,16 +1338,16 @@
 
           // convert params
           const currentPrivateEnc = evt.srcElement.form.getAttribute(private + "CurrentEnc");
-          privateValue = fromBytes(privateBytes, currentPrivateEnc);
+          let privateValue = fromBytes(privateBytes, currentPrivateEnc);
           evt.srcElement.form.elements[private].value = privateValue;
 
           const currentPublicEnc = evt.srcElement.form.getAttribute(public + "CurrentEnc");
-          publicValue = fromBytes(publicBytes, currentPublicEnc);
+          let publicValue = fromBytes(publicBytes, currentPublicEnc);
           evt.srcElement.form.elements[public].value = publicValue;
         }
 
         function ecdsaData(evt, target) {
-          var dataBytes = [];
+          let dataBytes = [];
           switch (evt.srcElement.value) {
             case "clear":
               break;
@@ -1336,7 +1361,7 @@
 
           // convert param
           const currentDataEnc = evt.srcElement.form.getAttribute(target + "CurrentEnc");
-          value = fromBytes(uint8ArrayToBytes(new Uint8Array(dataBytes)), currentDataEnc);
+          let value = fromBytes(uint8ArrayToBytes(new Uint8Array(dataBytes)), currentDataEnc);
           evt.srcElement.form.elements[target].value = value;
         }
 
@@ -1346,19 +1371,19 @@
           if (currentParamEnc != "hex") {
             return;
           }
-          var value = evt.srcElement.form.elements[target].value.replace(/(\s|0x)/g, "");
-          var regex = new RegExp(".{2}(.{" + (value.length - 2) / 2 + "})", "g");
+          let value = evt.srcElement.form.elements[target].value.replace(/(\s|0x)/g, "");
+          let regex = new RegExp(".{2}(.{" + (value.length - 2) / 2 + "})", "g");
           evt.srcElement.form.elements[target].value = value[0] + value[1] + "\n" + value.replace(regex, "$1\n");
         }
 
         async function ecdsaCheckKey(evt, private, public) {
           const curve = evt.srcElement.form.elements["curve"].value;
 
-          var privateBytes = toBytes(evt.srcElement.form.elements[private].value, evt.srcElement.form.getAttribute("keyCurrentEnc"));
-          var publicBytes = toBytes(evt.srcElement.form.elements[public].value, evt.srcElement.form.getAttribute("keyPubCurrentEnc"));
+          let privateBytes = toBytes(evt.srcElement.form.elements[private].value, evt.srcElement.form.getAttribute("keyCurrentEnc"));
+          let publicBytes = toBytes(evt.srcElement.form.elements[public].value, evt.srcElement.form.getAttribute("keyPubCurrentEnc"));
 
           // create key pair structure
-          const keyPair = {
+          let keyPair = {
             "crv": curve,
             "d": bytesToBase64Url(privateBytes),
             "ext": true,
@@ -1368,8 +1393,10 @@
             "y": bytesToBase64Url(publicBytes.slice(publicBytes.length - (publicBytes.length - 1) / 2), publicBytes.length) // y part
           };
 
+          let isValid = true;
+
           // check private key import
-          privateKey = await window.crypto.subtle.importKey(
+          const privateKey = await window.crypto.subtle.importKey(
             "jwk",
             keyPair,
             {
@@ -1378,15 +1405,16 @@
             },
             true,
             ["sign"]
-          ).then(function(keydata){
+          ).then(function(keydata) {
             return keydata;
           }).catch(function(err) {
-            evt.srcElement.form.elements[private].value = err;
+            isValid = false;
+            setStatus("ecdsaTab", 0, "<b>error</b>: " + err);
           });
 
           // check public key import
           delete keyPair['d']; // must be removed
-          publicKey = await window.crypto.subtle.importKey(
+          let publicKey = await window.crypto.subtle.importKey(
             "jwk",
             keyPair,
             {
@@ -1395,11 +1423,16 @@
             },
             true,
             ["verify"]
-          ).then(function(keydata){
+          ).then(function(keydata) {
             return keydata;
           }).catch(function(err) {
-            evt.srcElement.form.elements[private].value = err;
+            isValid = false;
+            setStatus("ecdsaTab", 0, "<b>error</b>: " + err);
           });
+
+          if (isValid) {
+            setStatus("ecdsaTab", 0, "<b>status</b>: ok");
+          }
         }
 
         async function ecdsa(evt) {
@@ -1407,13 +1440,14 @@
           const curve = evt.srcElement.form.elements["curve"].value;
           const currentSgnEnc = evt.srcElement.form.getAttribute("sgnCurrentEnc");
 
-          var privateBytes = toBytes(evt.srcElement.form.elements["key"].value, evt.srcElement.form.getAttribute("keyCurrentEnc"));
-          var publicBytes = toBytes(evt.srcElement.form.elements["keyPub"].value, evt.srcElement.form.getAttribute("keyPubCurrentEnc"));
-          var dataBytes = toBytes(evt.srcElement.form.elements["data"].value, evt.srcElement.form.getAttribute("dataCurrentEnc"));
+          let privateBytes = toBytes(evt.srcElement.form.elements["key"].value, evt.srcElement.form.getAttribute("keyCurrentEnc"));
+          let publicBytes = toBytes(evt.srcElement.form.elements["keyPub"].value, evt.srcElement.form.getAttribute("keyPubCurrentEnc"));
+          let dataBytes = toBytes(evt.srcElement.form.elements["data"].value, evt.srcElement.form.getAttribute("dataCurrentEnc"));
 
           if (evt.srcElement.value == "sign") {
             if (privateBytes == null || publicBytes == null || dataBytes == null) {
-              evt.srcElement.form.elements["sgn"].value = "error: bad input data";
+              evt.srcElement.form.elements["sgn"].value = "";
+              setStatus("ecdsaTab", 1, "<b>error</b>: bad input data");
               return;
             }
             // create key pair structure
@@ -1427,7 +1461,7 @@
               "y": bytesToBase64Url(publicBytes.slice(publicBytes.length - (publicBytes.length - 1) / 2), publicBytes.length) // y part
             };
 
-            privateKey = await window.crypto.subtle.importKey(
+            const privateKey = await window.crypto.subtle.importKey(
               "jwk",
               keyPair,
               {
@@ -1436,10 +1470,11 @@
               },
               true,
               ["sign"]
-            ).then(function(keydata){
+            ).then(function(keydata) {
               return keydata;
             }).catch(function(err) {
-              evt.srcElement.form.elements["sgn"].value = err;
+              evt.srcElement.form.elements["sgn"].value = "";
+              setStatus("ecdsaTab", 1, "<b>error</b>: " + err);
             });
 
             window.crypto.subtle.sign(
@@ -1450,17 +1485,19 @@
               privateKey,
               bytesToUint8Array(dataBytes)
             ).then(function(ecdsa) {
-              value = fromBytes(uint8ArrayToBytes(new Uint8Array(ecdsa)), currentSgnEnc);
+              let value = fromBytes(uint8ArrayToBytes(new Uint8Array(ecdsa)), currentSgnEnc);
               evt.srcElement.form.elements["sgn"].value = value;
-            }).catch(function(err){
-              evt.srcElement.form.elements["sgn"].value = err;
+            }).catch(function(err) {
+              evt.srcElement.form.elements["sgn"].value = "";
+              setStatus("ecdsaTab", 1, "<b>error</b>: " + err);
             });
           } else {
             if (publicBytes == null || dataBytes == null) {
-              evt.srcElement.form.elements["sgn"].value = "error: bad input data";
+              evt.srcElement.form.elements["sgn"].value = "";
+              setStatus("ecdsaTab", 1, "<b>error</b>: bad input data");
               return;
             }
-            var sgnBytes = toBytes(evt.srcElement.form.elements["sgn"].value, currentSgnEnc);
+            let sgnBytes = toBytes(evt.srcElement.form.elements["sgn"].value, currentSgnEnc);
             // create public key structure
             const keyPub = {
               "crv": curve,
@@ -1471,7 +1508,7 @@
               "y": bytesToBase64Url(publicBytes.slice(publicBytes.length - (publicBytes.length - 1) / 2), publicBytes.length) // y part
             };
 
-            publicKey = await window.crypto.subtle.importKey(
+            const publicKey = await window.crypto.subtle.importKey(
               "jwk",
               keyPub,
               {
@@ -1480,10 +1517,10 @@
               },
               true,
               ["verify"]
-            ).then(function(keydata){
+            ).then(function(keydata) {
               return keydata;
             }).catch(function(err) {
-              evt.srcElement.form.elements["sgn"].value = err;
+              setStatus("ecdsaTab", 1, "<b>error</b>: " + err);
             });
 
             window.crypto.subtle.verify(
@@ -1495,9 +1532,9 @@
               bytesToUint8Array(sgnBytes),
               bytesToUint8Array(dataBytes)
             ).then(function(isvalid) {
-              evt.srcElement.form.elements["sgn"].value = isvalid;
-            }).catch(function(err){
-              evt.srcElement.form.elements["sgn"].value = err;
+              setStatus("ecdsaTab", 1, "<b>status</b>: " + isvalid);
+            }).catch(function(err) {
+              setStatus("ecdsaTab", 1, "<b>error</b>: " + err);
             });
           }
         }
@@ -1516,20 +1553,22 @@
       // remove spaces/0x and convert a hex string to a byte array
       function hexToBytes(hex) {
         hex = hex.replace(/(\s|0x)/g, "");
-        var reg=/^([0-9a-f]{2})*$/i;
+        let reg=/^([0-9a-f]{2})*$/i;
         if (!reg.test(hex)) {
           return null;
         }
 
-        for (var bytes = [], c = 0; c < hex.length; c += 2)
+        let bytes = [];
+        for (bytes = [], c = 0; c < hex.length; c += 2)
           bytes.push(parseInt(hex.substr(c, 2), 16));
         return bytes;
       }
 
       // convert a byte array to a hex string and decorate it with new lines, spaces and prefixes
       function bytesToHex(bytes, newline = 0, space = 0, prefix = "") {
-        for (var hex = [], i = 0; i < bytes.length; i++) {
-          var current = bytes[i] < 0 ? bytes[i] + 256 : bytes[i];
+        let hex = [];
+        for (hex = [], i = 0; i < bytes.length; i++) {
+          let current = bytes[i] < 0 ? bytes[i] + 256 : bytes[i];
           hex.push((current >>> 4).toString(16));
           hex.push((current & 0xF).toString(16));
         }
@@ -1538,20 +1577,20 @@
           hex = prefix + hex;
         }
         if (space != 0) {
-          var regex = new RegExp("(.{" + space + "})", "g");
+          let regex = new RegExp("(.{" + space + "})", "g");
           hex = hex.replace(regex, "$1 " + prefix); // add spaces and prefix
           hex = hex.substring(0, hex.length - (1 + prefix.length)); // remove last occurence
           hex = prefix + hex; // add prefix at begining
         }
         if (newline != 0) {
-          var regex;
+          let regex;
           if (space == 0) {
             regex = new RegExp("(.{" + newline + "})", "g");
             hex = hex.replace(regex, "$1\n" + prefix); // add newline and prefix
             hex = hex.substring(0, hex.length - (1 + prefix.length)); // remove last occurence
             hex = prefix + hex; // add prefix at begining
           } else {
-            var fix = newline + (newline / space) * (1 + prefix.length) - 1; // fix newline value
+            let fix = newline + (newline / space) * (1 + prefix.length) - 1; // fix newline value
             regex = new RegExp("(.{" + fix + "}) ", "g");
             hex = hex.replace(regex, "$1\n"); // add newlines
           }
@@ -1622,7 +1661,7 @@
         if (value == null) {
           return [];
         }
-        var bytes = [];
+        let bytes = [];
         switch (encoding) {
           case "utf-8":
             bytes = uint8ArrayToBytes(new TextEncoder("utf-8").encode(value))
@@ -1645,7 +1684,7 @@
         if (bytes == null) {
           return "";
         }
-        var value;
+        let value;
         switch (encoding) {
           case "utf-8":
             value = new TextDecoder("utf-8").decode(bytesToUint8Array(bytes));
@@ -1665,8 +1704,8 @@
 
       // xor two buffers, input must be larger than key buffer
       function xorBytes(input, key) {
-        var output = [];
-        for (var i = 0; i < input.length; i++) {
+        let output = [];
+        for (let i = 0; i < input.length; i++) {
           output.push(input[i] ^ key[i % key.length]);
         }
         return output;
@@ -1674,7 +1713,7 @@
 
       // convert data in target field, if CurrentEnc isn't set utf-8 as default is used
       function switchDataEnc(evt, target, forceCurrentEnc = null, forceTargetEnc = null) {
-        var currentDataEnc = evt.srcElement.form.getAttribute(target + "CurrentEnc");
+        let currentDataEnc = evt.srcElement.form.getAttribute(target + "CurrentEnc");
         if (currentDataEnc == null) {
           currentDataEnc = "utf-8";
         }
@@ -1682,7 +1721,7 @@
           currentDataEnc = forceCurrentEnc;
         }
 
-        var targetDataEnc = evt.srcElement.value;
+        let targetDataEnc = evt.srcElement.value;
         if (forceTargetEnc != null) {
           targetDataEnc = forceTargetEnc;
         }
@@ -1693,9 +1732,9 @@
 
         console.log(currentDataEnc + " -> " + targetDataEnc);
 
-        var value = evt.srcElement.form.elements[target].value;
+        let value = evt.srcElement.form.elements[target].value;
         console.log("Current value: " + value);
-        var bytes = toBytes(value, currentDataEnc);
+        let bytes = toBytes(value, currentDataEnc);
         console.log("Bytes: " + bytes);
         value = fromBytes(bytes, targetDataEnc);
         console.log("Target value: " + value);
@@ -1706,11 +1745,11 @@
 
       // truncate data to given length
       function truncData(evt, target, length) {
-        var currentDataEnc = evt.srcElement.form.getAttribute(target + "CurrentEnc");
+        const currentDataEnc = evt.srcElement.form.getAttribute(target + "CurrentEnc");
 
-        var value = evt.srcElement.form.elements[target].value;
+        let value = evt.srcElement.form.elements[target].value;
         console.log("Current value: " + value);
-        var bytes = toBytes(value, currentDataEnc);
+        let bytes = toBytes(value, currentDataEnc);
         console.log("Bytes: " + bytes);
         bytes = bytes.slice(0, length);
         value = fromBytes(bytes, currentDataEnc);
@@ -1725,17 +1764,17 @@
         if (currentParamEnc != "hex") {
           return;
         }
-        var value = evt.srcElement.form.elements[target].value.replace(/(\s|0x)/g, "");
+        let value = evt.srcElement.form.elements[target].value.replace(/(\s|0x)/g, "");
         if (block < 0) {
           block = value.length / 2 / (-block);
         }
-        var regex = new RegExp("(.{" + 2*block + "})", "g");
+        let regex = new RegExp("(.{" + 2*block + "})", "g");
         evt.srcElement.form.elements[target].value = value.replace(regex, "$1\n");
       }
 
       // show given tab
       function showTab(evt, tabLabel) {
-        var i, tabcontent, tablinks;
+        let i, tabcontent, tablinks;
         tabcontent = document.getElementsByClassName("tabcontent");
         for (i = 0; i < tabcontent.length; i++) {
           tabcontent[i].style.display = "none";
@@ -1746,6 +1785,13 @@
         }
         document.getElementById(tabLabel).style.display = "block";
         evt.currentTarget.className += " active";
+      }
+
+      function setStatus(tab, statusId, text) {
+        document.getElementById(tab).getElementsByClassName("status")[statusId].innerHTML = text;
+        window.setTimeout(function() {
+          document.getElementById(tab).getElementsByClassName("status")[statusId].innerHTML = "";
+        }, 3000);
       }
     </script>
 
