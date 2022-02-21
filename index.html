@@ -57,6 +57,7 @@
       <button class="tablinks" onclick="showTab(event, 'shaTab')">SHA</button>
       <button class="tablinks" onclick="showTab(event, 'hmacTab')">HMAC</button>
       <button class="tablinks" onclick="showTab(event, 'ecdsaTab')">ECDSA</button>
+      <button class="tablinks" onclick="showTab(event, 'ecdhTab')">ECDH</button>
     </div>
 
     <div id ="defaultTab" class="tabcontent">
@@ -1544,6 +1545,381 @@
         document.getElementById("ecdsa").setAttribute("keyPub" + "CurrentEnc", "hex");
         document.getElementById("ecdsa").setAttribute("data" + "CurrentEnc", "utf-8");
         document.getElementById("ecdsa").setAttribute("sgn" + "CurrentEnc", "hex");
+      </script>
+    </div>
+
+    <div id="ecdhTab" class="tabcontent">
+      <form id="ecdh">
+        <p><b>EC</b>
+          <input type="radio" name="curve" id="p-256" value="P-256" checked/> P-256
+          <input type="radio" name="curve" id="p-384" value="P-384"/> P-384
+          <input type="radio" name="curve" id="p-521" value="P-521"/> P-521
+          <span class="status"></span>
+        </p>
+        <div id="left" style="float: left; width: 49%">
+          <p><b>A Private key</b>
+            <input type="radio" name="keyAEnc" value="utf-8" onclick="switchDataEnc(event, 'keyA');"/> utf-8
+            <input type="radio" name="keyAEnc" value="hex" checked onclick="switchDataEnc(event, 'keyA');"/> hex
+            <input type="radio" name="keyAEnc" value="base64" onclick="switchDataEnc(event, 'keyA');" /> base64
+            <input type="radio" name="keyAEnc" value="base64url" onclick="switchDataEnc(event, 'keyA');"/> base64url
+            <br/>
+            <textarea id="keyA" rows="3"></textarea>
+            <br/>
+            <b>A Public key</b>
+            <input type="radio" name="keyPubAEnc" value="utf-8" onclick="switchDataEnc(event, 'keyPubA');"/> utf-8
+            <input type="radio" name="keyPubAEnc" value="hex" checked onclick="switchDataEnc(event, 'keyPubA');"/> hex
+            <input type="radio" name="keyPubAEnc" value="base64" onclick="switchDataEnc(event, 'keyPubA');" /> base64
+            <input type="radio" name="keyPubAEnc" value="base64url" onclick="switchDataEnc(event, 'keyPubA');"/> base64url
+            <br/>
+            <textarea id="keyPubA" rows="7"></textarea>
+            <br/>
+            <input type="button" value="clear" onclick="ecdhKey(event, 'keyA', 'keyPubA');"/>
+            <input type="button" value="generate" onclick="ecdhKey(event, 'keyA', 'keyPubA');"/>
+            <input type="button" value="key #1" onclick="ecdhKey(event, 'keyA', 'keyPubA');"/>
+            <input type="button" value="key #2" onclick="ecdhKey(event, 'keyA', 'keyPubA');"/>
+            <input type="button" value="x/y split" onclick="ecdhPublicSplit(event, 'keyPubA');"/>
+            <input type="button" value="check" onclick="ecdhCheckKey(event, 'keyA', 'keyPubA');"/>
+          </p>
+          <p>
+            <input id="derive key" type="button" value="derive key" onclick="ecdh(event, 'keyA', 'keyPubA', 'keyPubB', 'secretA', 0);"/>
+            <input id="derive bits" type="button" value="derive bits" onclick="ecdh(event, 'keyA', 'keyPubA', 'keyPubB', 'secretA', 0);"/>
+            <input id="derive 512 bits" type="button" value="derive 512 bits" onclick="ecdh(event, 'keyA', 'keyPubA', 'keyPubB', 'secretA', 512);"/>
+          </p>
+          <p>
+            <b>A Secret</b>
+            <input type="radio" name="secretAEnc" value="utf-8" onclick="switchDataEnc(event, 'secretA');"/> utf-8
+            <input type="radio" name="secretAEnc" value="hex" checked onclick="switchDataEnc(event, 'secretA');"/> hex
+            <input type="radio" name="secretAEnc" value="base64" onclick="switchDataEnc(event, 'secretA');"/> base64
+            <input type="radio" name="secretAEnc" value="base64url" onclick="switchDataEnc(event, 'secretA');"/> base64url
+            <textarea id="secretA" rows="3"></textarea>
+            <br/>
+            <input type="button" value="clear" onclick="ecdhData(event, 'secretA');"/>
+          </p>
+        </div>
+        <div id="right" style="float: right; width: 49%">
+          <p><b>B Private key</b>
+            <input type="radio" name="keyBEnc" value="utf-8" onclick="switchDataEnc(event, 'keyB');"/> utf-8
+            <input type="radio" name="keyBEnc" value="hex" checked onclick="switchDataEnc(event, 'keyB');"/> hex
+            <input type="radio" name="keyBEnc" value="base64" onclick="switchDataEnc(event, 'keyB');" /> base64
+            <input type="radio" name="keyBEnc" value="base64url" onclick="switchDataEnc(event, 'keyB');"/> base64url
+            <br/>
+            <textarea id="keyB" rows="3"></textarea>
+            <br/>
+            <b>B Public key</b>
+            <input type="radio" name="keyPubBEnc" value="utf-8" onclick="switchDataEnc(event, 'keyPubB');"/> utf-8
+            <input type="radio" name="keyPubBEnc" value="hex" checked onclick="switchDataEnc(event, 'keyPubB');"/> hex
+            <input type="radio" name="keyPubBEnc" value="base64" onclick="switchDataEnc(event, 'keyPubB');" /> base64
+            <input type="radio" name="keyPubBEnc" value="base64url" onclick="switchDataEnc(event, 'keyPubB');"/> base64url
+            <br/>
+            <textarea id="keyPubB" rows="7"></textarea>
+            <br/>
+            <input type="button" value="clear" onclick="ecdhKey(event, 'keyB', 'keyPubB');"/>
+            <input type="button" value="generate" onclick="ecdhKey(event, 'keyB', 'keyPubB');"/>
+            <input type="button" value="key #1" onclick="ecdhKey(event, 'keyB', 'keyPubB');"/>
+            <input type="button" value="key #2" onclick="ecdhKey(event, 'keyB', 'keyPubB');"/>
+            <input type="button" value="x/y split" onclick="ecdhPublicSplit(event, 'keyPubB');"/>
+            <input type="button" value="check" onclick="ecdhCheckKey(event, 'keyB', 'keyPubB');"/>
+          </p>
+          <p>
+            <input id="derive key" type="button" value="derive key" onclick="ecdh(event, 'keyB', 'keyPubB', 'keyPubA', 'secretB', 0);"/>
+            <input id="derive bits" type="button" value="derive bits" onclick="ecdh(event, 'keyB', 'keyPubB', 'keyPubA', 'secretB', 0);"/>
+            <input id="derive 512 bits" type="button" value="derive 512 bits" onclick="ecdh(event, 'keyB', 'keyPubB', 'keyPubA', 'secretB', 512);"/>
+          </p>
+          <p>
+            <b>B Secret</b>
+            <input type="radio" name="secretAEnc" value="utf-8" onclick="switchDataEnc(event, 'secretB');"/> utf-8
+            <input type="radio" name="secretAEnc" value="hex" checked onclick="switchDataEnc(event, 'secretB');"/> hex
+            <input type="radio" name="secretAEnc" value="base64" onclick="switchDataEnc(event, 'secretB');"/> base64
+            <input type="radio" name="secretAEnc" value="base64url" onclick="switchDataEnc(event, 'secretB');"/> base64url
+            <textarea id="secretB" rows="3"></textarea>
+            <br/>
+            <input type="button" value="clear" onclick="ecdhData(event, 'secretB');"/>
+          </p>
+        </div>
+      </form>
+
+      <script>
+        async function ecdhKey(evt, private, public) {
+          let privateBytes = [];
+          let publicBytes = [];
+          switch (evt.srcElement.value) {
+            case "clear":
+              break;
+            case "generate":
+              // generate key pair
+              const curve = evt.srcElement.form.elements["curve"].value;
+              const keyPair = await window.crypto.subtle.generateKey(
+                {
+                  name: "ECDH",
+                  namedCurve: curve
+                },
+                true, // is key exportable
+                ["deriveKey", "deriveBits"]
+              ).then(function(key) {
+                return key;
+              }).catch(function(err) {
+                setStatus("ecdhTab", 0, "<b>error</b>: " + err);
+              });
+
+              // export private key
+              privateBytes = await window.crypto.subtle.exportKey(
+                "jwk",
+                keyPair["privateKey"]
+              ).then(function(keydata) {
+                return base64UrlToBytes(keydata["d"]);
+              }).catch(function(err) {
+                setStatus("ecdhTab", 0, "<b>error</b>: " + err);
+              });
+
+              // export public key
+              publicBytes = await window.crypto.subtle.exportKey(
+                "raw",
+                keyPair["publicKey"]
+              ).then(function(keydata) {
+                return uint8ArrayToBytes(new Uint8Array(keydata));
+              }).catch(function(err) {
+                setStatus("ecdhTab", 0, "<b>error</b>: " + err);
+              });
+              break;
+            case "key #1":
+              privateBytes = hexToBytes("2768f6b5a126203bcd997554030e394db197403bd5c89fb83854643e34360183");
+              publicBytes = hexToBytes("04842016b1a657a6509aaab6cd069cdb79c6338c8139bca9e036037a88057b0375e7eeea10d448ea4c299da6985c3428cdc0fd9eb76bcca8ccaeae600e07339f99");
+              evt.srcElement.form.elements["curve"][0].checked = true;
+              break;
+            case "key #2":
+              privateBytes = hexToBytes("1fbd6aa212f0e71c71fe72b569611a0862f58b2714ccd541072426780a1d75b60212e09dbee808db4dfd4994598ee223");
+              publicBytes = hexToBytes("04746de76853b4f38ea91fadebdc3c149e987a0e71906603199587c8a8bf3e1f94feff736004ae26966c12324bc95f74c0e59cc2b2019c56762c02cc82a8756472af447789a900ea4fd5b2231725a5b333e7d4377dec95556b5c39dc354314434d");
+              evt.srcElement.form.elements["curve"][1].checked = true;
+              break;
+            default:
+              console.log("Event not supported: " + evt.srcElement.value);
+              break;
+          }
+
+          // convert params
+          const currentPrivateEnc = evt.srcElement.form.getAttribute(private + "CurrentEnc");
+          let privateValue = fromBytes(privateBytes, currentPrivateEnc);
+          evt.srcElement.form.elements[private].value = privateValue;
+
+          const currentPublicEnc = evt.srcElement.form.getAttribute(public + "CurrentEnc");
+          let publicValue = fromBytes(publicBytes, currentPublicEnc);
+          evt.srcElement.form.elements[public].value = publicValue;
+        }
+
+        function ecdhData(evt, target) {
+          let dataBytes = [];
+          switch (evt.srcElement.value) {
+            case "clear":
+              break;
+            case "hello world":
+              dataBytes = toBytes("hello world", "utf-8");
+              break;
+            default:
+              console.log("Event not supported: " + evt.srcElement.value);
+              break;
+          }
+
+          // convert param
+          const currentDataEnc = evt.srcElement.form.getAttribute(target + "CurrentEnc");
+          let value = fromBytes(uint8ArrayToBytes(new Uint8Array(dataBytes)), currentDataEnc);
+          evt.srcElement.form.elements[target].value = value;
+        }
+
+        // split public key hex value in textarea
+        function ecdhPublicSplit(evt, target) {
+          const currentParamEnc = evt.srcElement.form.getAttribute(target + "CurrentEnc");
+          if (currentParamEnc != "hex") {
+            return;
+          }
+          let value = evt.srcElement.form.elements[target].value.replace(/(\s|0x)/g, "");
+          let regex = new RegExp(".{2}(.{" + (value.length - 2) / 2 + "})", "g");
+          evt.srcElement.form.elements[target].value = value[0] + value[1] + "\n" + value.replace(regex, "$1\n");
+        }
+
+        async function ecdhCheckKey(evt, private, public) {
+          const curve = evt.srcElement.form.elements["curve"].value;
+
+          let privateBytes = toBytes(evt.srcElement.form.elements[private].value, evt.srcElement.form.getAttribute(private + "CurrentEnc"));
+          let publicBytes = toBytes(evt.srcElement.form.elements[public].value, evt.srcElement.form.getAttribute(public + "CurrentEnc"));
+
+          // create key pair structure
+          let keyPair = {
+            "crv": curve,
+            "d": bytesToBase64Url(privateBytes),
+            "ext": true,
+            "key_ops": ["deriveKey", "deriveBits"],
+            "kty": "EC",
+            "x": bytesToBase64Url(publicBytes.slice(1, (publicBytes.length - 1) / 2 + 1)), // x part, 04 removed
+            "y": bytesToBase64Url(publicBytes.slice(publicBytes.length - (publicBytes.length - 1) / 2), publicBytes.length) // y part
+          };
+
+          let isValid = true;
+
+          // check private key import
+          const privateKey = await window.crypto.subtle.importKey(
+            "jwk",
+            keyPair,
+            {
+              name: "ECDH",
+              namedCurve: curve
+            },
+            true,
+            ["deriveKey", "deriveBits"]
+          ).then(function(keydata) {
+            return keydata;
+          }).catch(function(err) {
+            isValid = false;
+            setStatus("ecdhTab", 0, "<b>error</b>: " + err);
+          });
+
+          // check public key import
+          delete keyPair['d']; // must be removed
+          let publicKey = await window.crypto.subtle.importKey(
+            "jwk",
+            keyPair,
+            {
+              name: "ECDH",
+              namedCurve: curve
+            },
+            true,
+            []
+          ).then(function(keydata) {
+            return keydata;
+          }).catch(function(err) {
+            isValid = false;
+            setStatus("ecdhTab", 0, "<b>error</b>: " + err);
+          });
+
+          if (isValid) {
+            setStatus("ecdhTab", 0, "<b>status</b>: ok");
+          }
+        }
+
+        async function ecdh(evt, private, public, public2, secret, bits) {
+          const curve = evt.srcElement.form.elements["curve"].value;
+          const currentSecretEnc = evt.srcElement.form.getAttribute(secret + "CurrentEnc");
+
+          let privateBytes = toBytes(evt.srcElement.form.elements[private].value, evt.srcElement.form.getAttribute(private + "CurrentEnc"));
+          let publicBytes = toBytes(evt.srcElement.form.elements[public].value, evt.srcElement.form.getAttribute(public + "CurrentEnc"));
+          let public2Bytes = toBytes(evt.srcElement.form.elements[public2].value, evt.srcElement.form.getAttribute(public2 + "CurrentEnc"));
+
+          if (privateBytes == null || publicBytes == null || public2Bytes == null) {
+            evt.srcElement.form.elements[secret].value = "";
+            setStatus("ecdhTab", 0, "<b>error</b>: bad input data");
+            return;
+          }
+
+          // create key pair structure
+          const keyPair = {
+            "crv": curve,
+            "d": bytesToBase64Url(privateBytes),
+            "ext": true,
+            "key_ops": ["deriveKey", "deriveBits"],
+            "kty": "EC",
+            "x": bytesToBase64Url(publicBytes.slice(1, (publicBytes.length - 1) / 2 + 1)), // x part, 04 removed
+            "y": bytesToBase64Url(publicBytes.slice(publicBytes.length - (publicBytes.length - 1) / 2), publicBytes.length) // y part
+          };
+
+          const privateKey = await window.crypto.subtle.importKey(
+            "jwk",
+            keyPair,
+            {
+              name: "ECDH",
+              namedCurve: curve
+            },
+            true,
+            ["deriveKey", "deriveBits"]
+          ).then(function(keydata) {
+            return keydata;
+          }).catch(function(err) {
+            evt.srcElement.form.elements[secret].value = "";
+            setStatus("ecdhTab", 0, "<b>error</b>: " + err);
+          });
+
+          // create public key structure
+          const keyPub = {
+            "crv": curve,
+            "ext": true,
+            "key_ops": ["verify"],
+            "kty": "EC",
+            "x": bytesToBase64Url(public2Bytes.slice(1, (public2Bytes.length - 1) / 2 + 1)), // x part, 04 removed
+            "y": bytesToBase64Url(public2Bytes.slice(public2Bytes.length - (public2Bytes.length - 1) / 2), public2Bytes.length) // y part
+          };
+
+          const public2Key = await window.crypto.subtle.importKey(
+            "jwk",
+            keyPub,
+            {
+              name: "ECDH",
+              namedCurve: curve
+            },
+            true,
+            []
+          ).then(function(keydata) {
+            return keydata;
+          }).catch(function(err) {
+            setStatus("ecdhTab", 0, "<b>error</b>: " + err);
+          });
+
+          if (bits == 0) {
+            bits = ((publicBytes.length - 1) / 2) * 8;
+          }
+
+          if (evt.srcElement.value.search("bits") != -1) {
+            window.crypto.subtle.deriveBits(
+              {
+                name: "ECDH",
+                namedCurve: curve,
+                public: public2Key,
+              },
+              privateKey,
+              bits // number of bits to derive, max one coordinate
+            ).then(function(bits) {
+              let value = fromBytes(uint8ArrayToBytes(new Uint8Array(bits)), currentSecretEnc);
+              evt.srcElement.form.elements[secret].value = value;
+            }).catch(function(err) {
+              evt.srcElement.form.elements[secret].value = "";
+              setStatus("ecdhTab", 0, "<b>error</b>: " + err);
+            });
+          } else {
+            window.crypto.subtle.deriveKey(
+              {
+                name: "ECDH",
+                namedCurve: curve,
+                public: public2Key,
+              },
+              privateKey,
+              {
+                name: "AES-CBC",
+                length: 128,
+              },
+              true,
+              ["encrypt", "decrypt"]
+            ).then(function(keydata) {
+              // export private key
+              window.crypto.subtle.exportKey(
+                "raw",
+                keydata
+              ).then(function(keydata) {
+                let value = fromBytes(uint8ArrayToBytes(new Uint8Array(keydata)), currentSecretEnc);
+                evt.srcElement.form.elements[secret].value = value;
+              }).catch(function(err) {
+                setStatus("ecdhTab", 0, "<b>error</b>: " + err);
+              });
+            }).catch(function(err) {
+              evt.srcElement.form.elements[secret].value = "";
+              setStatus("ecdhTab", 0, "<b>error</b>: " + err);
+            });
+          }
+        }
+
+        // initialize fields
+        document.getElementById("ecdh").setAttribute("keyA" + "CurrentEnc", "hex");
+        document.getElementById("ecdh").setAttribute("keyPubA" + "CurrentEnc", "hex");
+        document.getElementById("ecdh").setAttribute("keyB" + "CurrentEnc", "hex");
+        document.getElementById("ecdh").setAttribute("keyPubB" + "CurrentEnc", "hex");
+        document.getElementById("ecdh").setAttribute("secretA" + "CurrentEnc", "hex");
+        document.getElementById("ecdh").setAttribute("secretB" + "CurrentEnc", "hex");
       </script>
     </div>
 
