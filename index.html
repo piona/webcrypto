@@ -48,8 +48,9 @@
       }
     </style>
   </head>
-  <body onload="showTab(event, 'defaultTab')">
+  <body>
     <div class="tab">
+      <button class="tablinks active" onclick="showTab(event, 'defaultTab')">Home</button>
       <button class="tablinks" onclick="showTab(event, 'encodingTab')">Encoding</button>
       <button class="tablinks" onclick="showTab(event, 'otpTab')">OTP</button>
       <button class="tablinks" onclick="showTab(event, 'keyshareTab')">Keyshare</button>
@@ -58,9 +59,10 @@
       <button class="tablinks" onclick="showTab(event, 'hmacTab')">HMAC</button>
       <button class="tablinks" onclick="showTab(event, 'ecdsaTab')">ECDSA</button>
       <button class="tablinks" onclick="showTab(event, 'ecdhTab')">ECDH</button>
+      <button class="tablinks" onclick="showTab(event, 'pbkdf2Tab')">PBKDF2</button>
     </div>
 
-    <div id ="defaultTab" class="tabcontent">
+    <div id="defaultTab" class="tabcontent" style="display: block;">
       <h3>Welcome to WebCrypto!</h3>
       <p>
         This page uses the Web Cryptography API to demonstrate some cryptographic operations.
@@ -317,7 +319,7 @@
         </p>
         <p>
           <b>Shares: <span id="keyshareShares">3</span></b><br/>
-          <input type="range" id="shares" name="shares" min="1" max="16" step="1" value="3" onchange="keyshareUpdateValue(event);"/>
+          <input type="range" id="shares" name="shares" min="1" max="16" step="1" value="3" oninput="keyshareUpdateValue(event);"/>
           <textarea id="share" rows="16"></textarea>
           <br/>
           <input type="button" value="clear" onclick="document.getElementById('keyshare').elements['share'].value = '';"/>
@@ -735,7 +737,7 @@
                 setStatus("aesTab", 0, "<b>error</b>: " + err);
               });
               console.log(emptyPadding);
-              let emptyPaddingBytes = uint8ArrayToBytes(new Uint8Array(emptyPadding, 0, 16))
+              let emptyPaddingBytes = uint8ArrayToBytes(new Uint8Array(emptyPadding, 0, 16));
 
               let block = [];
               if (i != inputBytes.length - 16) {
@@ -809,7 +811,7 @@
                 setStatus("aesTab", 0, "<b>error</b>: " + err);
               });
               console.log(emptyPadding);
-              let emptyPaddingBytes = uint8ArrayToBytes(new Uint8Array(emptyPadding, 0, 16))
+              let emptyPaddingBytes = uint8ArrayToBytes(new Uint8Array(emptyPadding, 0, 16));
               inputBytes = inputBytes.concat(emptyPaddingBytes);
             }
             let blocks = new Uint8Array(inputBytes);
@@ -1603,7 +1605,7 @@
             <input type="radio" name="secretAEnc" value="hex" checked onclick="switchDataEnc(event, 'secretA');"/> hex
             <input type="radio" name="secretAEnc" value="base64" onclick="switchDataEnc(event, 'secretA');"/> base64
             <input type="radio" name="secretAEnc" value="base64url" onclick="switchDataEnc(event, 'secretA');"/> base64url
-            <textarea id="secretA" rows="3"></textarea>
+            <textarea id="secretA" rows="3" readonly></textarea>
             <br/>
             <input type="button" value="clear" onclick="ecdhData(event, 'secretA');"/>
           </p>
@@ -1643,7 +1645,7 @@
             <input type="radio" name="secretAEnc" value="hex" checked onclick="switchDataEnc(event, 'secretB');"/> hex
             <input type="radio" name="secretAEnc" value="base64" onclick="switchDataEnc(event, 'secretB');"/> base64
             <input type="radio" name="secretAEnc" value="base64url" onclick="switchDataEnc(event, 'secretB');"/> base64url
-            <textarea id="secretB" rows="3"></textarea>
+            <textarea id="secretB" rows="3" readonly></textarea>
             <br/>
             <input type="button" value="clear" onclick="ecdhData(event, 'secretB');"/>
           </p>
@@ -1908,7 +1910,7 @@
               true,
               ["encrypt", "decrypt"]
             ).then(function(keydata) {
-              // export private key
+              // export key
               window.crypto.subtle.exportKey(
                 "raw",
                 keydata
@@ -1935,6 +1937,204 @@
       </script>
     </div>
 
+    <div id="pbkdf2Tab" class="tabcontent">
+      <form id="pbkdf2">
+        <p><b>Password</b>
+          <input type="radio" name="passEnc" value="utf-8" checked onclick="switchDataEnc(event, 'pass');"/> utf-8
+          <input type="radio" name="passEnc" value="hex" onclick="switchDataEnc(event, 'pass');"/> hex
+          <input type="radio" name="passEnc" value="base64" onclick="switchDataEnc(event, 'pass');" /> base64
+          <input type="radio" name="passEnc" value="base64url" onclick="switchDataEnc(event, 'pass');"/> base64url
+          <br/>
+          <textarea id="pass" rows="2"></textarea>
+          <br/>
+          <input type="button" value="clear" onclick="pbkdf2Data(event, 'pass');"/>
+          <input type="button" value="password" onclick="pbkdf2Data(event, 'pass');"/>
+        </p>
+        <p><b>HMAC</b>
+          <input type="radio" name="alg" value="SHA-256" checked/> SHA-256
+          <input type="radio" name="alg" value="SHA-384"/> SHA-384
+          <input type="radio" name="alg" value="SHA-512"/> SHA-512
+          <input type="radio" name="alg" value="SHA-1"/> SHA-1
+          <br/>
+        </p>
+        <p><b>Salt</b>
+          <input type="radio" name="saltEnc" value="utf-8" onclick="switchDataEnc(event, 'salt');"/> utf-8
+          <input type="radio" name="saltEnc" value="hex" checked onclick="switchDataEnc(event, 'salt');"/> hex
+          <input type="radio" name="saltEnc" value="base64" onclick="switchDataEnc(event, 'salt');"/> base64
+          <input type="radio" name="saltEnc" value="base64url" onclick="switchDataEnc(event, 'salt');"/> base64url
+          <br/>
+          <textarea id="salt" rows="2"></textarea>
+          <br/>
+          <input type="button" value="clear" onclick="pbkdf2Data(event, 'salt');"/>
+          <input type="button" value="128 bit" onclick="pbkdf2Data(event, 'salt');"/>
+          <input type="button" value="256 bit" onclick="pbkdf2Data(event, 'salt');"/>
+          <input type="button" value="salt #1" onclick="pbkdf2Data(event, 'salt');"/>
+          <input type="button" value="salt #2" onclick="pbkdf2Data(event, 'salt');"/>
+        </p>
+        <p><b>Iterations: <span id="pbkdf2Iterations">256000</span></b><br/>
+          <input type="range" id="iterations" name="shares" min="1" max="1000000" step="1" value="256000" style="width: 100%" oninput="pbkdf2UpdateValue(event);"/>
+        </p>
+        <p>
+          <input id="derive key" type="button" value="derive key" onclick="pbkdf2(event, 0);"/>
+          <input id="derive bits" type="button" value="derive bits" onclick="pbkdf2(event, 0);"/>
+          <input id="derive 512 bits" type="button" value="derive 512 bits" onclick="pbkdf2(event, 512);"/>
+        </p>
+        <p><b>Output</b>
+          <input type="radio" name="outputEnc" value="utf-8" onclick="switchDataEnc(event, 'output');"/> utf-8
+          <input type="radio" name="outputEnc" value="hex" checked onclick="switchDataEnc(event, 'output');"/> hex
+          <input type="radio" name="outputEnc" value="base64" onclick="switchDataEnc(event, 'output');"/> base64
+          <input type="radio" name="outputEnc" value="base64url" onclick="switchDataEnc(event, 'output');"/> base64url
+          <textarea id="output" rows="3" readonly></textarea>
+          <br/>
+          <input type="button" value="clear" onclick="pbkdf2Data(event, 'output');"/>
+          <span class="status"></span>
+        </p>
+      </form>
+
+      <script>
+        function pbkdf2Data(evt, target) {
+          let dataBytes = [];
+          switch (evt.srcElement.value) {
+            case "clear":
+              break;
+            case "password":
+              dataBytes = toBytes("password", "utf-8");
+              break;
+            case "128 bit":
+              dataBytes = uint8ArrayToBytes(window.crypto.getRandomValues(new Uint8Array(16)));
+              break;
+            case "256 bit":
+              dataBytes = uint8ArrayToBytes(window.crypto.getRandomValues(new Uint8Array(32)));
+              break;
+            case "salt #1":
+              dataBytes = hexToBytes("8eda45b24ce3a0adb96448562f7dcc9a");
+              break;
+            case "salt #2":
+              dataBytes = hexToBytes("6fb2d9a935e7751eaeb88026ce0ce0f6c2dc22a0b9b0d5e52af261570b1cb7a9");
+              break;
+            default:
+              console.log("Event not supported: " + evt.srcElement.value);
+              break;
+          }
+
+          // convert param
+          const currentDataEnc = evt.srcElement.form.getAttribute(target + "CurrentEnc");
+          let value = fromBytes(uint8ArrayToBytes(new Uint8Array(dataBytes)), currentDataEnc);
+          evt.srcElement.form.elements[target].value = value;
+        }
+
+        async function pbkdf2(evt, bits) {
+          const alg = evt.srcElement.form.elements["alg"].value;
+          const currentOutputEnc = evt.srcElement.form.getAttribute("outputCurrentEnc");
+          const iterations = evt.srcElement.form.elements["iterations"].value;
+
+          const passBytes = toBytes(evt.srcElement.form.elements["pass"].value, evt.srcElement.form.getAttribute("passCurrentEnc"));
+          const saltBytes = toBytes(evt.srcElement.form.elements["salt"].value, evt.srcElement.form.getAttribute("saltCurrentEnc"));
+
+          if (passBytes == null || saltBytes == null) {
+            evt.srcElement.form.elements["output"].value = "";
+            setStatus("pbkdf2Tab", 0, "<b>error</b>: bad input data");
+            return;
+          }
+
+          const pbkdf2Key = await window.crypto.subtle.importKey(
+            "raw",
+            bytesToUint8Array(passBytes), // password
+            {
+              name: "PBKDF2",
+            },
+            false,
+            ["deriveKey", "deriveBits"]
+          ).then(function(key) {
+            return key;
+          }).catch(function(err) {
+            evt.srcElement.form.elements["output"].value = "";
+            setStatus("pbkdf2Tab", 0, "<b>error</b>: " + err);
+          });
+
+          if (pbkdf2Key == null) {
+            return;
+          }
+
+          if (bits == 0) {
+            switch (alg) {
+              case "SHA-256":
+                bits=256;
+                break;
+              case "SHA-384":
+                bits=384;
+                break;
+              case "SHA-512":
+                bits=512;
+                break;
+              case "SHA-1":
+                bits=160;
+                break;
+            }
+          }
+
+          if (evt.srcElement.value.search("bits") != -1) {
+            window.crypto.subtle.deriveBits(
+              {
+                "name": "PBKDF2",
+                salt: bytesToUint8Array(saltBytes),
+                iterations: iterations,
+                hash: {name: alg}
+              },
+              pbkdf2Key,
+              bits //the number of bits you want to derive
+            ).then(function(bits) {
+              let value = fromBytes(uint8ArrayToBytes(new Uint8Array(bits)), currentOutputEnc);
+              evt.srcElement.form.elements["output"].value = value;
+            }).catch(function(err) {
+              evt.srcElement.form.elements["output"].value = "";
+              setStatus("pbkdf2Tab", 0, "<b>error</b>: " + err);
+            });
+          } else {
+            window.crypto.subtle.deriveKey(
+              {
+                "name": "PBKDF2",
+                salt: bytesToUint8Array(saltBytes),
+                iterations: iterations,
+                hash: {name: alg}
+              },
+              pbkdf2Key,
+              {
+                name: "AES-CBC",
+                length: 128,
+              },
+              true,
+              ["encrypt", "decrypt"]
+            ).then(function(keydata) {
+              // export key
+              window.crypto.subtle.exportKey(
+                "raw",
+                keydata
+              ).then(function(keydata) {
+                let value = fromBytes(uint8ArrayToBytes(new Uint8Array(keydata)), currentOutputEnc);
+                evt.srcElement.form.elements["output"].value = value;
+              }).catch(function(err) {
+                setStatus("pbkdf2Tab", 0, "<b>error</b>: " + err);
+              });
+            }).catch(function(err) {
+              evt.srcElement.form.elements["output"].value = "";
+              setStatus("pbkdf2Tab", 0, "<b>error</b>: " + err);
+            });
+          }
+        }
+
+        // update iterations from input range
+        function pbkdf2UpdateValue(evt) {
+          document.getElementById("pbkdf2Tab").querySelector("#pbkdf2Iterations").innerHTML = evt.srcElement.value;
+        }
+
+        // initialize fields
+        document.getElementById("pbkdf2").setAttribute("pass" + "CurrentEnc", "utf-8");
+        document.getElementById("pbkdf2").setAttribute("salt" + "CurrentEnc", "hex");
+        document.getElementById("pbkdf2").setAttribute("output" + "CurrentEnc", "hex");
+      </script>
+    </div>
+
     <script>
       // common functions
 
@@ -1947,8 +2147,9 @@
         }
 
         let bytes = [];
-        for (bytes = [], c = 0; c < hex.length; c += 2)
+        for (bytes = [], c = 0; c < hex.length; c += 2) {
           bytes.push(parseInt(hex.substr(c, 2), 16));
+        }
         return bytes;
       }
 
@@ -2052,7 +2253,7 @@
         let bytes = [];
         switch (encoding) {
           case "utf-8":
-            bytes = uint8ArrayToBytes(new TextEncoder("utf-8").encode(value))
+            bytes = uint8ArrayToBytes(new TextEncoder("utf-8").encode(value));
             break;
           case "hex":
             bytes = hexToBytes(value);
@@ -2172,7 +2373,9 @@
           tablinks[i].className = tablinks[i].className.replace(" active", "");
         }
         document.getElementById(tabLabel).style.display = "block";
-        evt.currentTarget.className += " active";
+        if (evt != null) {
+          evt.currentTarget.className += " active";
+        }
       }
 
       function setStatus(tab, statusId, text) {
@@ -2181,6 +2384,7 @@
           document.getElementById(tab).getElementsByClassName("status")[statusId].innerHTML = "";
         }, 3000);
       }
+
     </script>
 
   </body>
