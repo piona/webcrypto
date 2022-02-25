@@ -1641,10 +1641,10 @@
           </p>
           <p>
             <b>B Secret</b>
-            <input type="radio" name="secretAEnc" value="utf-8" onclick="switchDataEnc(event, 'secretB');"/> utf-8
-            <input type="radio" name="secretAEnc" value="hex" checked onclick="switchDataEnc(event, 'secretB');"/> hex
-            <input type="radio" name="secretAEnc" value="base64" onclick="switchDataEnc(event, 'secretB');"/> base64
-            <input type="radio" name="secretAEnc" value="base64url" onclick="switchDataEnc(event, 'secretB');"/> base64url
+            <input type="radio" name="secretBEnc" value="utf-8" onclick="switchDataEnc(event, 'secretB');"/> utf-8
+            <input type="radio" name="secretBEnc" value="hex" checked onclick="switchDataEnc(event, 'secretB');"/> hex
+            <input type="radio" name="secretBEnc" value="base64" onclick="switchDataEnc(event, 'secretB');"/> base64
+            <input type="radio" name="secretBEnc" value="base64url" onclick="switchDataEnc(event, 'secretB');"/> base64url
             <textarea id="secretB" rows="3" readonly></textarea>
             <br/>
             <input type="button" value="clear" onclick="ecdhData(event, 'secretB');"/>
