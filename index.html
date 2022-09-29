@@ -57,7 +57,7 @@
       <button class="tablinks" onclick="showTab(event, 'aesTab')">AES</button>
       <button class="tablinks" onclick="showTab(event, 'shaTab')">SHA</button>
       <button class="tablinks" onclick="showTab(event, 'hmacTab')">HMAC</button>
-      <button class="tablinks" onclick="showTab(event, 'rsapssTab')">RSA-PSS</button>
+      <button class="tablinks" onclick="showTab(event, 'rsaTab')">RSA</button>
       <button class="tablinks" onclick="showTab(event, 'ecdsaTab')">ECDSA</button>
       <button class="tablinks" onclick="showTab(event, 'ecdhTab')">ECDH</button>
       <button class="tablinks" onclick="showTab(event, 'pbkdf2Tab')">PBKDF2</button>
@@ -1226,9 +1226,14 @@
       </script>
     </div>
 
-    <div id="rsapssTab" class="tabcontent">
-      <form id="rsapss">
+    <div id="rsaTab" class="tabcontent">
+      <form id="rsa">
         <p><b>RSA</b>
+          <input type="radio" name="mode" value="OAEP" checked onclick="rsaMode(event);"/> OAEP
+          <input type="radio" name="mode" value="PSS" onclick="rsaMode(event);"/> PSS
+          <br/>
+        </p>
+        <p><b>Key length</b>
           <input type="radio" name="keyLength" value="1024" checked/> 1024
           <input type="radio" name="keyLength" value="2048"/> 2048
           <input type="radio" name="keyLength" value="4096"/> 4096
@@ -1298,20 +1303,22 @@
           <br/>
           <textarea id="key_qi" rows="3"></textarea>
           <br/>
-          <input type="button" value="clear" onclick="rsapssKey(event, 'key_n', 'key_e', 'key_d', 'key_p', 'key_q', 'key_dp', 'key_dq', 'key_qi');"/>
-          <input type="button" value="generate" onclick="rsapssKey(event, 'key_n', 'key_e', 'key_d', 'key_p', 'key_q', 'key_dp', 'key_dq', 'key_qi');"/>
-          <input type="button" value="key #1" onclick="rsapssKey(event, 'key_n', 'key_e', 'key_d', 'key_p', 'key_q', 'key_dp', 'key_dq', 'key_qi');"/>
-          <input type="button" value="key #2" onclick="rsapssKey(event, 'key_n', 'key_e', 'key_d', 'key_p', 'key_q', 'key_dp', 'key_dq', 'key_qi');"/>
-          <input type="button" value="check" onclick="rsapssCheckKey(event, 'key_n', 'key_e', 'key_d', 'key_p', 'key_q', 'key_dp', 'key_dq', 'key_qi');"/>
+          <input type="button" value="clear" onclick="rsaKey(event, 'key_n', 'key_e', 'key_d', 'key_p', 'key_q', 'key_dp', 'key_dq', 'key_qi');"/>
+          <input type="button" value="clear private" onclick="rsaKey(event, 'key_n', 'key_e', 'key_d', 'key_p', 'key_q', 'key_dp', 'key_dq', 'key_qi');"/>
+          <input type="button" value="generate" onclick="rsaKey(event, 'key_n', 'key_e', 'key_d', 'key_p', 'key_q', 'key_dp', 'key_dq', 'key_qi');"/>
+          <input type="button" value="key #1" onclick="rsaKey(event, 'key_n', 'key_e', 'key_d', 'key_p', 'key_q', 'key_dp', 'key_dq', 'key_qi');"/>
+          <input type="button" value="key #2" onclick="rsaKey(event, 'key_n', 'key_e', 'key_d', 'key_p', 'key_q', 'key_dp', 'key_dq', 'key_qi');"/>
+          <input type="button" value="check" onclick="rsaCheckKey(event, 'key_n', 'key_e', 'key_d', 'key_p', 'key_q', 'key_dp', 'key_dq', 'key_qi');"/>
           <span class="status"></span>
         </p>
-        <p><b>RSA-PSS</b>
+        <p><b>Hash</b>
           <input type="radio" name="alg" value="SHA-256" checked/> SHA-256
           <input type="radio" name="alg" value="SHA-384"/> SHA-384
           <input type="radio" name="alg" value="SHA-512"/> SHA-512
           <input type="radio" name="alg" value="SHA-1"/> SHA-1
           <br/>
         </p>
+        <span id="rsaSignature" hidden>
         <p><b>Data</b>
           <input type="radio" name="dataEnc" value="utf-8" checked onclick="switchDataEnc(event, 'data');"/> utf-8
           <input type="radio" name="dataEnc" value="hex" onclick="switchDataEnc(event, 'data');"/> hex
@@ -1320,12 +1327,12 @@
           <br/>
           <textarea id="data" rows="10"></textarea>
           <br/>
-          <input type="button" value="clear" onclick="rsapssData(event, 'data');"/>
-          <input type="button" value="hello world" onclick="rsapssData(event, 'data');"/>
+          <input type="button" value="clear" onclick="rsaData(event, 'data');"/>
+          <input type="button" value="hello world" onclick="rsaData(event, 'data');"/>
         </p>
         <p>
-          <input id="sign" type="button" value="sign" onclick="rsapss(event);"/>
-          <input id="verify" type="button" value="verify" onclick="rsapss(event);"/>
+          <input id="sign" type="button" value="sign" onclick="rsa(event);"/>
+          <input id="verify" type="button" value="verify" onclick="rsa(event);"/>
         </p>
         <p>
           <b>Signature</b>
@@ -1335,13 +1342,65 @@
           <input type="radio" name="sgnEnc" value="base64url" onclick="switchDataEnc(event, 'sgn');"/> base64url
           <textarea id="sgn" rows="5"></textarea>
           <br/>
-          <input type="button" value="clear" onclick="rsapssData(event, 'sgn');"/>
+          <input type="button" value="clear" onclick="rsaData(event, 'sgn');"/>
           <span class="status"></span>
+          </p>
+        </span>
+        <span id="rsaEncryption">
+        <p><b>Input</b>
+          <input type="radio" name="inputEnc" value="utf-8" onclick="switchDataEnc(event, 'input');"/> utf-8
+          <input type="radio" name="inputEnc" value="hex" checked onclick="switchDataEnc(event, 'input');"/> hex
+          <input type="radio" name="inputEnc" value="base64" onclick="switchDataEnc(event, 'input');"/> base64
+          <input type="radio" name="inputEnc" value="base64url" onclick="switchDataEnc(event, 'input');"/> base64url
+          <br/>
+          <textarea id="input" rows="5"></textarea>
+          <br/>
+          <input type="button" value="clear" onclick="rsaData(event, 'input');"/>
+          <input type="button" value="hello world" onclick="rsaData(event, 'input');"/>
         </p>
+        <p>
+          <input id="encrypt" type="button" value="encrypt" onclick="rsa(event);"/>
+          <input id="decrypt" type="button" value="decrypt" onclick="rsa(event);"/>
+        </p>
+        <p>
+          <b>Output</b>
+          <input type="radio" name="outputEnc" value="utf-8" onclick="switchDataEnc(event, 'output');"/> utf-8
+          <input type="radio" name="outputEnc" value="hex" checked onclick="switchDataEnc(event, 'output');"/> hex
+          <input type="radio" name="outputEnc" value="base64" onclick="switchDataEnc(event, 'output');"/> base64
+          <input type="radio" name="outputEnc" value="base64url" onclick="switchDataEnc(event, 'output');"/> base64url
+          <textarea id="output" rows="5"></textarea>
+          <br/>
+          <input type="button" value="clear" onclick="rsaData(event, 'output');"/>
+          <input type="button" value="copy as input"
+                               onclick="document.getElementById('rsa').elements['input'].value = document.getElementById('rsa').elements['output'].value;"/>
+          <span class="status"></span>
+          </p>
+        </p>
+        </span>
       </form>
 
       <script>
-        async function rsapssKey(evt, key_n, key_e, key_d, key_p, key_q, key_dp, key_dq, key_qi) {
+        // show/hide fields when switching mode of operation
+        function rsaMode(evt) {
+          console.log("RSA mode: " + evt.srcElement.value);
+          let rsaTab = document.getElementById("rsaTab");
+          switch (evt.srcElement.value) {
+            case "OAEP":
+              // encryption
+              rsaTab.querySelector("#rsaEncryption").removeAttribute("hidden");
+              rsaTab.querySelector("#rsaSignature").setAttribute("hidden", undefined);
+              break;
+            case "PSS":
+              // signature
+              rsaTab.querySelector("#rsaSignature").removeAttribute("hidden");
+              rsaTab.querySelector("#rsaEncryption").setAttribute("hidden", undefined);
+              break;
+            default:
+              return;
+          }
+        }
+
+        async function rsaKey(evt, key_n, key_e, key_d, key_p, key_q, key_dp, key_dq, key_qi) {
           let key_eBytes = [];
           let key_nBytes = [];
           let key_dBytes = [];
@@ -1354,10 +1413,13 @@
           switch (evt.srcElement.value) {
             case "clear":
               break;
+            case "clear private":
+              key_nBytes = toBytes(evt.srcElement.form.elements[key_n].value, evt.srcElement.form.getAttribute("key_nCurrentEnc"));
+              key_eBytes = toBytes(evt.srcElement.form.elements[key_e].value, evt.srcElement.form.getAttribute("key_eCurrentEnc"));
+              break;
             case "generate":
               // generate key pair
               const length = evt.srcElement.form.elements["keyLength"].value;
-              console.log(length);
               const alg = evt.srcElement.form.elements["alg"].value;
               const keyPair = await window.crypto.subtle.generateKey(
                 {
@@ -1371,10 +1433,8 @@
               ).then(function(key) {
                 return key;
               }).catch(function(err) {
-                setStatus("rsapssTab", 0, "<b>error</b>: " + err);
+                setStatus("rsaTab", 0, "<b>error</b>: " + err);
               });
-
-              console.log(keyPair);
 
               // export private key
               privateKey = await window.crypto.subtle.exportKey(
@@ -1383,10 +1443,8 @@
               ).then(function(keydata) {
                 return keydata;
               }).catch(function(err) {
-                setStatus("rsapssTab", 0, "<b>error</b>: " + err);
+                setStatus("rsaTab", 0, "<b>error</b>: " + err);
               });
-
-              console.log(privateKey);
 
               // export public key
               publicKey = await window.crypto.subtle.exportKey(
@@ -1395,7 +1453,7 @@
               ).then(function(keydata) {
                 return keydata;
               }).catch(function(err) {
-                setStatus("rsapssTab", 0, "<b>error</b>: " + err);
+                setStatus("rsaTab", 0, "<b>error</b>: " + err);
               });
 
               key_nBytes = base64UrlToBytes(publicKey["n"]);
@@ -1468,7 +1526,7 @@
           evt.srcElement.form.elements[key_qi].value = key_qiValue;
         }
 
-        function rsapssData(evt, target) {
+        function rsaData(evt, target) {
           let dataBytes = [];
           switch (evt.srcElement.value) {
             case "clear":
@@ -1487,7 +1545,7 @@
           evt.srcElement.form.elements[target].value = value;
         }
 
-        async function rsapssCheckKey(evt, key_n, key_e, key_d, key_p, key_q, key_dp, key_dq, key_qi) {
+        async function rsaCheckKey(evt, key_n, key_e, key_d, key_p, key_q, key_dp, key_dq, key_qi) {
           const alg = evt.srcElement.form.elements["alg"].value;
 
           let key_nBytes = toBytes(evt.srcElement.form.elements[key_n].value, evt.srcElement.form.getAttribute("key_nCurrentEnc"));
@@ -1516,7 +1574,6 @@
           };
 
           let isValid = true;
-          console.log(keyPair);
 
           // check private key import
           const privateKey = await window.crypto.subtle.importKey(
@@ -1532,10 +1589,8 @@
             return keydata;
           }).catch(function(err) {
             isValid = false;
-            setStatus("rsapssTab", 0, "<b>error</b>: " + err);
+            setStatus("rsaTab", 0, "<b>error</b>: " + err);
           });
-
-          console.log(privateKey);
 
           // check public key import
           delete keyPair['d']; // must be removed
@@ -1552,17 +1607,16 @@
             return keydata;
           }).catch(function(err) {
             isValid = false;
-            setStatus("rsapssTab", 0, "<b>error</b>: " + err);
+            setStatus("rsaTab", 0, "<b>error</b>: " + err);
           });
 
           if (isValid) {
-            setStatus("rsapssTab", 0, "<b>status</b>: ok");
+            setStatus("rsaTab", 0, "<b>status</b>: ok");
           }
         }
 
-        async function rsapss(evt) {
+        async function rsa(evt) {
           const alg = evt.srcElement.form.elements["alg"].value;
-          const currentSgnEnc = evt.srcElement.form.getAttribute("sgnCurrentEnc");
 
           let key_nBytes = toBytes(evt.srcElement.form.elements["key_n"].value, evt.srcElement.form.getAttribute("key_nCurrentEnc"));
           let key_eBytes = toBytes(evt.srcElement.form.elements["key_e"].value, evt.srcElement.form.getAttribute("key_eCurrentEnc"));
@@ -1572,13 +1626,14 @@
           let key_dpBytes = toBytes(evt.srcElement.form.elements["key_dp"].value, evt.srcElement.form.getAttribute("key_dpCurrentEnc"));
           let key_dqBytes = toBytes(evt.srcElement.form.elements["key_dq"].value, evt.srcElement.form.getAttribute("key_dqCurrentEnc"));
           let key_qiBytes = toBytes(evt.srcElement.form.elements["key_qi"].value, evt.srcElement.form.getAttribute("key_qiCurrentEnc"));
-          let dataBytes = toBytes(evt.srcElement.form.elements["data"].value, evt.srcElement.form.getAttribute("dataCurrentEnc"));
 
           if (evt.srcElement.value == "sign") {
+            const currentSgnEnc = evt.srcElement.form.getAttribute("sgnCurrentEnc");
+            const dataBytes = toBytes(evt.srcElement.form.elements["data"].value, evt.srcElement.form.getAttribute("dataCurrentEnc"));
             if (key_nBytes == null || key_eBytes == null || key_dBytes == null || key_pBytes == null || key_qBytes == null ||
                 key_dpBytes == null || key_dqBytes == null || key_qiBytes == null || dataBytes == null) {
               evt.srcElement.form.elements["sgn"].value = "";
-              setStatus("rsapssTab", 1, "<b>error</b>: bad input data");
+              setStatus("rsaTab", 1, "<b>error</b>: bad input data");
               return;
             }
             // create key pair structure
@@ -1597,7 +1652,7 @@
               "kty": "RSA",
             };
 
-            // check private key import
+            // private key import
             const privateKey = await window.crypto.subtle.importKey(
               "jwk",
               keyPair,
@@ -1611,11 +1666,8 @@
               return keydata;
             }).catch(function(err) {
               evt.srcElement.form.elements["sgn"].value = "";
-              setStatus("rsapssTab", 1, "<b>error</b>: " + err);
+              setStatus("rsaTab", 1, "<b>error</b>: " + err);
             });
-
-            console.log(privateKey);
-            console.log(dataBytes);
 
             window.crypto.subtle.sign(
               {
@@ -1624,23 +1676,25 @@
               },
               privateKey,
               bytesToUint8Array(dataBytes)
-            ).then(function(rsapss) {
-              let value = fromBytes(uint8ArrayToBytes(new Uint8Array(rsapss)), currentSgnEnc);
+            ).then(function(rsa) {
+              let value = fromBytes(uint8ArrayToBytes(new Uint8Array(rsa)), currentSgnEnc);
               evt.srcElement.form.elements["sgn"].value = value;
             }).catch(function(err) {
               evt.srcElement.form.elements["sgn"].value = "";
-              setStatus("rsapssTab", 1, "<b>error</b>: " + err);
+              setStatus("rsaTab", 1, "<b>error</b>: " + err);
             });
-          } else {
+          } else if (evt.srcElement.value == "verify") {
+            const currentSgnEnc = evt.srcElement.form.getAttribute("sgnCurrentEnc");
+            const dataBytes = toBytes(evt.srcElement.form.elements["data"].value, evt.srcElement.form.getAttribute("dataCurrentEnc"));
             if (key_nBytes == null || key_eBytes == null || dataBytes == null) {
               evt.srcElement.form.elements["sgn"].value = "";
-              setStatus("rsapssTab", 1, "<b>error</b>: bad input data");
+              setStatus("rsaTab", 1, "<b>error</b>: bad input data");
               return;
             }
             let sgnBytes = toBytes(evt.srcElement.form.elements["sgn"].value, currentSgnEnc);
             // create public key structure
             const keyPub = {
-             "alg": "PS" + alg.substring(4),
+              "alg": "PS" + alg.substring(4),
               "n": bytesToBase64Url(key_nBytes),
               "e": bytesToBase64Url(key_eBytes),
               "ext": true,
@@ -1660,7 +1714,7 @@
             ).then(function(keydata) {
               return keydata;
             }).catch(function(err) {
-              setStatus("rsapssTab", 1, "<b>error</b>: " + err);
+              setStatus("rsaTab", 1, "<b>error</b>: " + err);
             });
 
             window.crypto.subtle.verify(
@@ -1672,27 +1726,131 @@
               bytesToUint8Array(sgnBytes),
               bytesToUint8Array(dataBytes)
             ).then(function(isvalid) {
-              setStatus("rsapssTab", 1, "<b>status</b>: " + isvalid);
+              setStatus("rsaTab", 1, "<b>status</b>: " + isvalid);
             }).catch(function(err) {
-              setStatus("rsapssTab", 1, "<b>error</b>: " + err);
+              setStatus("rsaTab", 1, "<b>error</b>: " + err);
+            });
+          } else if (evt.srcElement.value == "encrypt") {
+            const currentOutputEnc = evt.srcElement.form.getAttribute("outputCurrentEnc");
+            const inputBytes = toBytes(evt.srcElement.form.elements["input"].value, evt.srcElement.form.getAttribute("inputCurrentEnc"));
+            if (key_nBytes == null || key_eBytes == null || inputBytes == null) {
+              evt.srcElement.form.elements["output"].value = "";
+              setStatus("rsaTab", 2, "<b>error</b>: bad input data");
+              return;
+            }
+            // create public key structure
+            const keyPub = {
+              "alg": "RSA-OAEP-" + alg.substring(4),
+              "n": bytesToBase64Url(key_nBytes),
+              "e": bytesToBase64Url(key_eBytes),
+              "ext": true,
+              "key_ops": ["encrypt"],
+              "kty": "RSA",
+            };
+
+            const publicKey = await window.crypto.subtle.importKey(
+              "jwk",
+              keyPub,
+              {
+                name: "RSA-OAEP",
+                hash: {name: alg}
+              },
+              true,
+              ["encrypt"]
+            ).then(function(keydata) {
+              return keydata;
+            }).catch(function(err) {
+              setStatus("rsaTab", 2, "<b>error</b>: " + err);
+            });
+
+            window.crypto.subtle.encrypt(
+              {
+                name: "RSA-OAEP",
+              },
+              publicKey,
+              bytesToUint8Array(inputBytes)
+            ).then(function(encrypted) {
+              let value = fromBytes(uint8ArrayToBytes(new Uint8Array(encrypted)), currentOutputEnc);
+              evt.srcElement.form.elements["output"].value = value;
+            }).catch(function(err) {
+              evt.srcElement.form.elements["output"].value = "";
+              setStatus("rsaTab", 2, "<b>error</b>: " + err);
+            });
+          } else if (evt.srcElement.value == "decrypt") {
+            const currentOutputEnc = evt.srcElement.form.getAttribute("outputCurrentEnc");
+            const inputBytes = toBytes(evt.srcElement.form.elements["input"].value, evt.srcElement.form.getAttribute("inputCurrentEnc"));
+
+            if (key_nBytes == null || key_eBytes == null || key_dBytes == null || key_pBytes == null || key_qBytes == null ||
+                key_dpBytes == null || key_dqBytes == null || key_qiBytes == null || inputBytes == null) {
+              evt.srcElement.form.elements["output"].value = "";
+              setStatus("rsaTab", 2, "<b>error</b>: bad input data");
+              return;
+            }
+
+            // create key pair structure
+            let keyPair = {
+              "alg": "RSA-OAEP-" + alg.substring(4),
+              "n": bytesToBase64Url(key_nBytes),
+              "e": bytesToBase64Url(key_eBytes),
+              "d": bytesToBase64Url(key_dBytes),
+              "p": bytesToBase64Url(key_pBytes),
+              "q": bytesToBase64Url(key_qBytes),
+              "dp": bytesToBase64Url(key_dpBytes),
+              "dq": bytesToBase64Url(key_dqBytes),
+              "qi": bytesToBase64Url(key_qiBytes),
+              "ext": true,
+              "key_ops": ["decrypt"],
+              "kty": "RSA",
+            };
+
+            // private key import
+            const privateKey = await window.crypto.subtle.importKey(
+              "jwk",
+              keyPair,
+              {
+                name: "RSA-OAEP",
+                hash: {name: alg}
+              },
+              true,
+              ["decrypt"]
+            ).then(function(keydata) {
+              return keydata;
+            }).catch(function(err) {
+              evt.srcElement.form.elements["output"].value = "";
+              setStatus("rsaTab", 2, "<b>error</b>: " + err);
+            });
+
+            window.crypto.subtle.decrypt(
+              {
+                name: "RSA-OAEP",
+              },
+              privateKey,
+              bytesToUint8Array(inputBytes)
+            ).then(function(decrypted) {
+              let value = fromBytes(uint8ArrayToBytes(new Uint8Array(decrypted)), currentOutputEnc);
+              evt.srcElement.form.elements["output"].value = value;
+            }).catch(function(err) {
+              evt.srcElement.form.elements["output"].value = "";
+              setStatus("rsaTab", 2, "<b>error</b>: " + err);
             });
           }
         }
 
         // initialize fields
-        document.getElementById("rsapss").setAttribute("key_e" + "CurrentEnc", "hex");
-        document.getElementById("rsapss").setAttribute("key_n" + "CurrentEnc", "hex");
-        document.getElementById("rsapss").setAttribute("key_d" + "CurrentEnc", "hex");
-        document.getElementById("rsapss").setAttribute("key_p" + "CurrentEnc", "hex");
-        document.getElementById("rsapss").setAttribute("key_q" + "CurrentEnc", "hex");
-        document.getElementById("rsapss").setAttribute("key_dp" + "CurrentEnc", "hex");
-        document.getElementById("rsapss").setAttribute("key_dq" + "CurrentEnc", "hex");
-        document.getElementById("rsapss").setAttribute("key_qi" + "CurrentEnc", "hex");
-        document.getElementById("rsapss").setAttribute("data" + "CurrentEnc", "utf-8");
-        document.getElementById("rsapss").setAttribute("sgn" + "CurrentEnc", "hex");
+        document.getElementById("rsa").setAttribute("key_e" + "CurrentEnc", "hex");
+        document.getElementById("rsa").setAttribute("key_n" + "CurrentEnc", "hex");
+        document.getElementById("rsa").setAttribute("key_d" + "CurrentEnc", "hex");
+        document.getElementById("rsa").setAttribute("key_p" + "CurrentEnc", "hex");
+        document.getElementById("rsa").setAttribute("key_q" + "CurrentEnc", "hex");
+        document.getElementById("rsa").setAttribute("key_dp" + "CurrentEnc", "hex");
+        document.getElementById("rsa").setAttribute("key_dq" + "CurrentEnc", "hex");
+        document.getElementById("rsa").setAttribute("key_qi" + "CurrentEnc", "hex");
+        document.getElementById("rsa").setAttribute("data" + "CurrentEnc", "utf-8");
+        document.getElementById("rsa").setAttribute("sgn" + "CurrentEnc", "hex");
+        document.getElementById("rsa").setAttribute("input" + "CurrentEnc", "hex");
+        document.getElementById("rsa").setAttribute("output" + "CurrentEnc", "hex");
       </script>
     </div>
-
 
     <div id="ecdsaTab" class="tabcontent">
       <form id="ecdsa">
@@ -1719,6 +1877,7 @@
           <textarea id="keyPub" rows="3"></textarea>
           <br/>
           <input type="button" value="clear" onclick="ecdsaKey(event, 'key', 'keyPub');"/>
+          <input type="button" value="clear private" onclick="ecdsaKey(event, 'key', 'keyPub');"/>
           <input type="button" value="generate" onclick="ecdsaKey(event, 'key', 'keyPub');"/>
           <input type="button" value="key #1" onclick="ecdsaKey(event, 'key', 'keyPub');"/>
           <input type="button" value="key #2" onclick="ecdsaKey(event, 'key', 'keyPub');"/>
@@ -1768,6 +1927,9 @@
           let publicBytes = [];
           switch (evt.srcElement.value) {
             case "clear":
+              break;
+            case "clear private":
+              publicBytes = toBytes(evt.srcElement.form.elements[public].value, evt.srcElement.form.getAttribute("keyPubCurrentEnc"));
               break;
             case "generate":
               // generate key pair
