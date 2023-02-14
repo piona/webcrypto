@@ -59,6 +59,7 @@
       <button class="tablinks" onclick="showTab(event, 'otpTab')">OTP</button>
       <button class="tablinks" onclick="showTab(event, 'keyshareTab')">Keyshare</button>
       <button class="tablinks" onclick="showTab(event, 'aesTab')">AES</button>
+      <button class="tablinks" onclick="showTab(event, 'kwTab')">KW</button>
       <button class="tablinks" onclick="showTab(event, 'shaTab')">SHA</button>
       <button class="tablinks" onclick="showTab(event, 'hmacTab')">HMAC</button>
       <button class="tablinks" onclick="showTab(event, 'rsaTab')">RSA</button>
@@ -940,6 +941,299 @@
         document.getElementById("aes").setAttribute("aad" + "CurrentEnc", "hex");
         document.getElementById("aes").setAttribute("output" + "CurrentEnc", "hex");
         document.getElementById("aes").setAttribute("authTag" + "CurrentEnc", "hex");
+      </script>
+    </div>
+
+    <div id="kwTab" class="tabcontent">
+      <form id="kw">
+        <p><b>Wrapping key</b>
+          <input type="radio" name="wrappingEnc" value="utf-8" onclick="switchDataEnc(event, 'wrapping');"/> utf-8
+          <input type="radio" name="wrappingEnc" value="hex" checked onclick="switchDataEnc(event, 'wrapping');"/> hex
+          <input type="radio" name="wrappingEnc" value="base64" onclick="switchDataEnc(event, 'wrapping');" /> base64
+          <input type="radio" name="wrappingEnc" value="base64url" onclick="switchDataEnc(event, 'wrapping');"/> base64url
+          <br/>
+          <textarea id="wrapping" rows="2"></textarea>
+          <br/>
+          <input type="button" value="clear" onclick="kwParams(event, 'wrapping');"/>
+          <input type="button" value="128 bit" onclick="kwParams(event, 'wrapping');"/>
+          <input type="button" value="192 bit" onclick="kwParams(event, 'wrapping');"/>
+          <input type="button" value="256 bit" onclick="kwParams(event, 'wrapping');"/>
+          <input type="button" value="key #1" onclick="kwParams(event, 'wrapping');"/>
+          <input type="button" value="key #2" onclick="kwParams(event, 'wrapping');"/>
+        </p>
+        <p><b>Plain key</b>
+          <input type="radio" name="keyEnc" value="utf-8" onclick="switchDataEnc(event, 'key');"/> utf-8
+          <input type="radio" name="keyEnc" value="hex" checked onclick="switchDataEnc(event, 'key');"/> hex
+          <input type="radio" name="keyEnc" value="base64" onclick="switchDataEnc(event, 'key');" /> base64
+          <input type="radio" name="keyEnc" value="base64url" onclick="switchDataEnc(event, 'key');"/> base64url
+          <br/>
+          <textarea id="key" rows="2"></textarea>
+          <br/>
+          <input type="button" value="clear" onclick="kwParams(event, 'key');"/>
+          <input type="button" value="128 bit" onclick="kwParams(event, 'key');"/>
+          <input type="button" value="192 bit" onclick="kwParams(event, 'key');"/>
+          <input type="button" value="256 bit" onclick="kwParams(event, 'key');"/>
+          <input type="button" value="key #1" onclick="kwParams(event, 'key');"/>
+          <input type="button" value="key #2" onclick="kwParams(event, 'key');"/>
+        </p>
+        <p>
+          <input id="encrypt" type="button" value="encrypt" onclick="kwCrypt(event);"/>
+          <input id="wrap" type="button" value="wrap" onclick="kwCrypt(event);"/>
+        </p>
+        <p>
+          <b>Wrapped key</b>
+          <input type="radio" name="wrappedEnc" value="utf-8" onclick="switchDataEnc(event, 'wrapped');"/> utf-8
+          <input type="radio" name="wrappedEnc" value="hex" checked onclick="switchDataEnc(event, 'wrapped');"/> hex
+          <input type="radio" name="wrappedEnc" value="base64" onclick="switchDataEnc(event, 'wrapped');"/> base64
+          <input type="radio" name="wrappedEnc" value="base64url" onclick="switchDataEnc(event, 'wrapped');"/> base64url
+          <textarea id="wrapped" rows="2"></textarea>
+          <br/>
+          <input type="button" value="clear" onclick="kwParams(event, 'wrapped');"/>
+          <span class="status"></span>
+        </p>
+        <p>
+          <input id="decrypt" type="button" value="decrypt" onclick="kwCrypt(event);"/>
+          <input id="unwrap" type="button" value="unwrap" onclick="kwCrypt(event);"/>
+        </p>
+        <p>
+          <b>Unwrapped key</b>
+          <input type="radio" name="unwrappedEnc" value="utf-8" onclick="switchDataEnc(event, 'unwrapped');"/> utf-8
+          <input type="radio" name="unwrappedEnc" value="hex" checked onclick="switchDataEnc(event, 'unwrapped');"/> hex
+          <input type="radio" name="unwrappedEnc" value="base64" onclick="switchDataEnc(event, 'unwrapped');"/> base64
+          <input type="radio" name="unwrappedEnc" value="base64url" onclick="switchDataEnc(event, 'unwrapped');"/> base64url
+          <textarea id="unwrapped" rows="2" readonly></textarea>
+          <br/>
+          <input type="button" value="clear" onclick="kwParams(event, 'unwrapped');"/>
+        </p>
+      </form>
+
+      <script>
+        function kwParams(evt, target) {
+          let paramBytes = [];
+          switch (evt.srcElement.value) {
+            case "clear":
+              break;
+            case "128 bit":
+              paramBytes = uint8ArrayToBytes(window.crypto.getRandomValues(new Uint8Array(16)));
+              break;
+            case "192 bit":
+              paramBytes = uint8ArrayToBytes(window.crypto.getRandomValues(new Uint8Array(24)));
+              break;
+            case "256 bit":
+              paramBytes = uint8ArrayToBytes(window.crypto.getRandomValues(new Uint8Array(32)));
+              break;
+            case "key #1":
+              paramBytes = hexToBytes("6745486a2ee2b58ddb5578b4777e9f13");
+              break;
+            case "key #2":
+              paramBytes = hexToBytes("ead670026e84e4a6c3fd5ebcff381e3cbedf508c80d1342bb9778ec599143f8f");
+              break;
+            default:
+              console.log("Event not supported: " + evt.srcElement.value);
+              break;
+          }
+
+          // convert param
+          const currentParamEnc = evt.srcElement.form.getAttribute(target + "CurrentEnc");
+          let value = fromBytes(uint8ArrayToBytes(new Uint8Array(paramBytes)), currentParamEnc);
+          evt.srcElement.form.elements[target].value = value;
+        }
+
+        // perform encryption/decryption/wrap/unwrap
+        async function kwCrypt(evt) {
+          const oper = evt.srcElement.value;
+          console.log("Operation: " + oper);
+
+          // read and import AES transport key
+          const wrappingBytes = toBytes(evt.srcElement.form.elements["wrapping"].value, evt.srcElement.form.getAttribute("wrappingCurrentEnc"));
+
+          // import raw transport key
+          const wrappingKey = await window.crypto.subtle.importKey(
+            "raw",
+            bytesToUint8Array(wrappingBytes),
+            "AES-" + ((oper == "encrypt" || oper == "decrypt") ? "CBC" : "KW"),
+            true,
+            // create valid key usage
+            ((oper == "encrypt" || oper == "decrypt") ? [ "encrypt", "decrypt" ] : [ "wrapKey", "unwrapKey" ])
+          ).then(function(key) {
+            return key;
+          }).catch(function(err) {
+            evt.srcElement.form.elements["wrapped"].value = "";
+            setStatus("kwTab", 0, "<b>error</b>: " + err);
+          });
+
+          if (wrappingKey == null) {
+            return;
+          }
+
+          // read input
+          let inputBytes = [];
+          if (oper == "encrypt" || oper == "wrap") {
+            inputBytes = toBytes(evt.srcElement.form.elements["key"].value, evt.srcElement.form.getAttribute("keyCurrentEnc"));
+          } else {
+            inputBytes = toBytes(evt.srcElement.form.elements["wrapped"].value, evt.srcElement.form.getAttribute("wrappedCurrentEnc"));
+          }
+
+          let output = [];
+          console.log("inputBytes length = " + inputBytes.length);
+
+          if (oper == "encrypt") { // use CBC as ECB mode for each block
+            for (let i = 0; i <= inputBytes.length; i += 16) {
+              if (i == inputBytes.length) {
+                break;
+              }
+              let block = new Uint8Array(inputBytes.slice(i, i + 16));
+              const encryptedBlock = await window.crypto.subtle.encrypt(
+                {
+                  name: "AES-CBC",
+                  iv: new Uint8Array(16),
+                },
+                wrappingKey,
+                block
+              ).then(function(encrypted) {
+                return encrypted;
+              }).catch(function(err) {
+                evt.srcElement.form.elements["wrapped"].value = "";
+                setStatus("kwTab", 0, "<b>error</b>: " + err);
+              });
+              if (encryptedBlock == null) {
+                return;
+              }
+              output = output.concat(uint8ArrayToBytes(new Uint8Array(encryptedBlock, 0, 16)));
+            }
+
+            let value = fromBytes(output, evt.srcElement.form.getAttribute("wrappedCurrentEnc"));
+            evt.srcElement.form.elements["wrapped"].value = value;
+          } else if (oper == "decrypt") {
+            for (let i = 0; i < inputBytes.length; i += 16) {
+              // prepare empty padding
+              const emptyPadding = await window.crypto.subtle.encrypt(
+                {
+                  name: "AES-CBC",
+                  iv: new Uint8Array(16),
+                },
+                wrappingKey,
+                new Uint8Array(xorBytes(uint8ArrayToBytes(new Uint8Array(Array(16).fill(16))), inputBytes.slice(i, i + 16)))
+              ).then(function(encrypted) {
+                return encrypted;
+              }).catch(function(err) {
+                evt.srcElement.form.elements["unwrapped"].value = "";
+                setStatus("kwTab", 0, "<b>error</b>: " + err);
+              });
+              console.log(emptyPadding);
+              let emptyPaddingBytes = uint8ArrayToBytes(new Uint8Array(emptyPadding, 0, 16));
+
+              let block = new Uint8Array(inputBytes.slice(i, i + 16).concat(emptyPaddingBytes));
+
+              const decryptedBlock = await window.crypto.subtle.decrypt(
+                {
+                  name: "AES-CBC",
+                  iv: new Uint8Array(16),
+                },
+                wrappingKey,
+                block
+              ).then(function(decrypted) {
+                return decrypted;
+              }).catch(function(err) {
+                evt.srcElement.form.elements["unwrapped"].value = "";
+                setStatus("kwTab", 0, "<b>error</b>: " + err);
+              });
+              if (decryptedBlock == null) {
+                return;
+              }
+
+              if (decryptedBlock.length > 16) {
+                output = output.concat(uint8ArrayToBytes(new Uint8Array(decryptedBlock, 0, 16)));
+              } else {
+                output = output.concat(uint8ArrayToBytes(new Uint8Array(decryptedBlock)));
+              }
+            }
+
+            let value = fromBytes(output, evt.srcElement.form.getAttribute("unwrappedCurrentEnc"));
+            evt.srcElement.form.elements["unwrapped"].value = value;
+          } else if (oper == "wrap") {
+            // import raw key to wrap
+            const keyKey = await window.crypto.subtle.importKey(
+              "raw",
+              bytesToUint8Array(inputBytes),
+              "AES-CBC",
+              true,
+              ["encrypt", "decrypt"]
+            ).then(function(key) {
+              return key;
+            }).catch(function(err) {
+              evt.srcElement.form.elements["unwrapped"].value = "";
+              setStatus("kwTab", 0, "<b>error</b>: " + err);
+            });
+
+            if (keyKey == null) {
+              return;
+            }
+
+            // wrap key
+            const wrappedKey = await window.crypto.subtle.wrapKey(
+              "raw",
+              keyKey,
+              wrappingKey,
+              {
+                name: "AES-KW",
+              }
+            ).then(function(wrapped) {
+              return wrapped;
+            }).catch(function(err) {
+              evt.srcElement.form.elements["wrapped"].value = "";
+              setStatus("kwTab", 0, "<b>error</b>: " + err);
+            });
+            if (wrappedKey == null) {
+              return;
+            }
+            output = uint8ArrayToBytes(new Uint8Array(wrappedKey));
+
+            let value = fromBytes(output, evt.srcElement.form.getAttribute("wrappedCurrentEnc"));
+            evt.srcElement.form.elements["wrapped"].value = value;
+          } else if (oper == "unwrap") {
+            const unwrappedKey = await window.crypto.subtle.unwrapKey(
+              "raw",
+              bytesToUint8Array(inputBytes),
+              wrappingKey,
+              {
+                name: "AES-KW",
+              },
+              {
+                name: "AES-CBC",
+              },
+              true,
+              ["encrypt", "decrypt"]
+            ).then(function(key) {
+              return key;
+            }).catch(function(err) {
+              evt.srcElement.form.elements["unwrapped"].value = "";
+              setStatus("kwTab", 0, "<b>error</b>: " + err);
+            });
+
+            console.log(unwrappedKey);
+
+            const unwrappedKeyBytes = await window.crypto.subtle.exportKey(
+              "raw",
+              unwrappedKey
+            ).then(function(key) {
+              return key;
+            }).catch(function(err) {
+              evt.srcElement.form.elements["unwrapped"].value = "";
+              setStatus("kwTab", 0, "<b>error</b>: " + err);
+            });
+            output = uint8ArrayToBytes(new Uint8Array(unwrappedKeyBytes));
+
+            let value = fromBytes(output, evt.srcElement.form.getAttribute("unwrappedCurrentEnc"));
+            evt.srcElement.form.elements["unwrapped"].value = value;
+          }
+        }
+
+        // initialize fields
+        document.getElementById("kw").setAttribute("wrapping" + "CurrentEnc", "hex");
+        document.getElementById("kw").setAttribute("key" + "CurrentEnc", "hex");
+        document.getElementById("kw").setAttribute("wrapped" + "CurrentEnc", "hex");
+        document.getElementById("kw").setAttribute("unwrapped" + "CurrentEnc", "hex");
       </script>
     </div>
 
